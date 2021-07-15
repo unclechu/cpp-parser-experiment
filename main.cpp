@@ -19,14 +19,21 @@ struct Unit: tuple<> {};
 struct JsonValue; // Algebraic data type
 
 // Constructors-ish
-struct Object: tuple<map<string, JsonValue>> {};
-struct Array: tuple<list<unique_ptr<JsonValue>>> {};
-struct String: tuple<string> {};
-struct Number: tuple<variant<int, double>> {};
-struct Bool: tuple<bool> {};
-struct Null: Unit {};
+struct JsonObject: tuple<map<string, JsonValue>> {};
+struct JsonArray: tuple<list<unique_ptr<JsonValue>>> {};
+struct JsonString: tuple<string> {};
+struct JsonNumber: tuple<variant<int, double>> {};
+struct JsonBool: tuple<bool> {};
+struct JsonNull: Unit {};
 
-struct JsonValue: variant<Object, Array, String, Number, Bool, Null> {};
+struct JsonValue: variant<
+	JsonObject,
+	JsonArray,
+	JsonString,
+	JsonNumber,
+	JsonBool,
+	JsonNull
+> {};
 
 // }}}1
 

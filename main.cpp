@@ -11,6 +11,8 @@
 
 using namespace std;
 
+struct Unit: tuple<> {};
+
 
 // Free JSON value representation type {{{1
 
@@ -22,7 +24,7 @@ struct Array: tuple<list<unique_ptr<JsonValue>>> {};
 struct String: tuple<string> {};
 struct Number: tuple<variant<int, double>> {};
 struct Bool: tuple<bool> {};
-struct Null: tuple<> {};
+struct Null: Unit {};
 
 struct JsonValue: variant<Object, Array, String, Number, Bool, Null> {};
 
@@ -224,13 +226,113 @@ variant<ParsingError, A> parse(Parser<A> parser, Input input)
 // }}}1
 
 
+// Atomic-ish parsers (the building blocks) {{{1
+
+string char_as_str(char c)
+{
+	string s(1, c);
+	return s;
+}
+
+Parser<Unit> end_of_input()
+{
+	return Parser<Unit>{[](Input input) {
+		ParsingResult<Unit> result;
+		return input.empty()
+			? result = make_tuple(Unit{}, input)
+			: result = ParsingError{"end_of_input: input is not empty"};
+	}};
+}
+
+Parser<char> any_char()
+{
+	return Parser<char>{[](Input input) {
+		ParsingResult<char> result;
+		return input.empty()
+			? result = ParsingError{"any_char: input is empty"}
+			: result = make_tuple(input[0], input.substr(1));
+	}};
+}
+
+Parser<char> parse_char(char c)
+{
+	return Parser<char>{[=](Input input) {
+		ParsingResult<char> result;
+
+		auto pfx = [=](string msg){
+			return "parse_char('" + char_as_str(c) + "'): " + msg;
+		};
+
+		if (input.empty())
+			return result = ParsingError{pfx("input is empty")};
+		else if (input[0] != c)
+			return result = ParsingError{pfx(
+				"char is different, got this: '" + char_as_str(input[0]) + "'"
+			)};
+		else
+			return result = make_tuple(input[0], input.substr(1));
+	}};
+}
+
+// Just takes what’s left in the input
+Parser<string> any_string()
+{
+	return Parser<string>{[](Input input) { return make_tuple(input, ""); }};
+}
+
+Parser<string> parse_string(string s)
+{
+	return Parser<string>{[=](Input input) {
+		ParsingResult<string> result;
+
+		auto pfx = [=](string msg){
+			return "parse_string(\"" + s + "\"): " + msg;
+		};
+
+		string taken_string;
+
+		if (input.empty())
+			return result = ParsingError{pfx("input is empty")};
+		else if (input.size() < s.size())
+			return result = ParsingError{pfx(
+				"input is less than string (input is: \"" + input + "\")"
+			)};
+		else if ((taken_string = input.substr(0, s.size())) != s)
+			return result = ParsingError{pfx(
+				"string is different, got this: \"" + taken_string + "\""
+			)};
+		else
+			return result = make_tuple(taken_string, input.substr(s.size()));
+	}};
+}
+
+// }}}1
+
+
 int test_basic_stuff();
+int test_composition_of_simple_parsers();
 
 int main()
 {
-	return test_basic_stuff();
+	//TODO call depending on arguments
+	//return test_basic_stuff();
+	return test_composition_of_simple_parsers();
 }
 
+
+// Stupid WIP tests {{{1
+
+template <typename T>
+int debug_a_test(variant<ParsingError, T> result)
+{
+	if (auto x = get_if<ParsingError>(&result)) {
+		cerr << "Failed to parse: " << *x << endl;
+		return EXIT_FAILURE;
+	} else {
+		cout << "Successfully parsed: " << get<T>(result) << endl;
+		return EXIT_SUCCESS;
+	}
+}
 
 int test_basic_stuff()
 {
@@ -271,12 +373,24 @@ int test_basic_stuff()
 
 	using T = string;
 	const variant<ParsingError, T> result = parse<T>(test8, "foobar");
-
-	if (auto x = get_if<ParsingError>(&result)) {
-		cerr << "Failed to parse: " << *x << endl;
-		return EXIT_FAILURE;
-	} else {
-		cout << "Success: " << get<T>(result) << endl;
-		return EXIT_SUCCESS;
-	}
+	return debug_a_test(result);
 }
+
+int test_composition_of_simple_parsers()
+{
+	using T = string;
+	const variant<ParsingError, T> result = parse<T>(
+		(function<function<function<string(string)>(char)>(char)>(
+			[](char a) { return [=](char b) { return [=](string c) {
+				return char_as_str(a) + char_as_str(b) + "|" + c;
+			}; }; }
+		) | any_char())
+			^ parse_char('o')
+			^ parse_string("obar")
+			<< end_of_input(),
+		"foobar"
+	);
+	return debug_a_test(result);
+}
+
+// }}}1

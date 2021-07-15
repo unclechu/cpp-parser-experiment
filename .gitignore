@@ -1,0 +1,6 @@
+cpp-parsing
+*.o
+
+# Nix artefacts
+result
+result-*

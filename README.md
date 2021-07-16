@@ -20,6 +20,16 @@ nix build
 result/bin/cpp-parsing
 ```
 
+#### Development shell
+
+If you’re going to manually (re-)build the app using `make` or/and `g++`
+directly you can omit building the app when entering a nix-shell by setting the
+`build-the-program` argument to `false` like this:
+
+``` sh
+nix-shell --arg build-the-program false
+```
+
 ## Author
 
 Viacheslav Lotsmanov

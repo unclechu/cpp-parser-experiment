@@ -76,7 +76,7 @@ Parser<B> fmapParser(function<B(A)> mapFn, Parser<A> parser)
 }
 template <typename A, typename B>
 // Operator equivalent for “fmapParser”
-Parser<B> operator|(function<B(A)> mapFn, Parser<A> parser)
+Parser<B> operator^(function<B(A)> mapFn, Parser<A> parser)
 {
 	return fmapParser<A, B>(mapFn, parser);
 }
@@ -345,7 +345,7 @@ int test_basic_stuff()
 	/* 	return to_string(x); */
 	/* }, test1); */
 	const Parser<string> test2 =
-		function<string(int)>([](int x) { return to_string(x); }) | test1;
+		function<string(int)>([](int x) { return to_string(x); }) ^ test1;
 
 	const Parser<bool> test3 = test2 >= true;
 
@@ -379,11 +379,12 @@ int test_composition_of_simple_parsers()
 {
 	using T = string;
 	const variant<ParsingError, T> result = parse<T>(
-		(function<function<function<string(string)>(char)>(char)>(
+		function<function<function<string(string)>(char)>(char)>(
 			[](char a) { return [=](char b) { return [=](string c) {
 				return char_as_str(a) + char_as_str(b) + "|" + c;
 			}; }; }
-		) | any_char())
+		)
+			^ any_char()
 			^ parse_char('o')
 			^ parse_string("obar")
 			<< end_of_input(),

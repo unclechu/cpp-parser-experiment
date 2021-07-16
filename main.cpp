@@ -63,18 +63,15 @@ template <typename A, typename B>
 // (<$>) :: (a → b) → Parser a → Parser b
 Parser<B> fmapParser(function<B(A)> mapFn, Parser<A> parser)
 {
-	return Parser<B>{[=](Input input) {
+	return Parser<B>{[=](Input input) -> ParsingResult<B> {
 		auto parsingResult = parser(input);
-		ParsingResult<B> result;
 
 		if (auto x = get_if<ParsingSuccess<A>>(&parsingResult)) {
 			auto [ value, tail ] = *x;
-			result = make_tuple(mapFn(value), tail);
+			return make_tuple(mapFn(value), tail);
 		} else {
-			result = get<ParsingError>(parsingResult);
+			return get<ParsingError>(parsingResult);
 		}
-
-		return result;
 	}};
 }
 template <typename A, typename B>
@@ -130,11 +127,11 @@ template <typename A, typename B>
 // (<*>) :: Parser (a → b) → Parser a → Parser b
 Parser<B> apply(Parser<function<B(A)>> fnParser, Parser<A> parser)
 {
-	return Parser<B>{[=](Input input) {
+	return Parser<B>{[=](Input input) -> ParsingResult<B> {
 		auto parsingResult = fnParser(input);
 
 		if (auto err = get_if<ParsingError>(&parsingResult))
-			return static_cast<ParsingResult<B>>(*err);
+			return *err;
 
 		auto [ fn, tail ] = get<ParsingSuccess<function<B(A)>>>(parsingResult);
 		return fmapParser<A, B>(fn, parser)(tail);
@@ -203,8 +200,7 @@ function<B(ParsingResult<A>)> parsingResolver(
 			auto [ value, _ ] = *x;
 			return successResolve(value);
 		} else {
-			auto err = get<ParsingError>(result);
-			return failureResolve(err);
+			return failureResolve(get<ParsingError>(result));
 		}
 	};
 }
@@ -243,41 +239,39 @@ string char_as_str(char c)
 
 Parser<Unit> end_of_input()
 {
-	return Parser<Unit>{[](Input input) {
-		ParsingResult<Unit> result;
-		return input.empty()
-			? result = make_tuple(Unit{}, input)
-			: result = ParsingError{"end_of_input: input is not empty"};
+	return Parser<Unit>{[](Input input) -> ParsingResult<Unit> {
+		if (input.empty())
+			return make_tuple(Unit{}, input);
+		else
+			return ParsingError{"end_of_input: input is not empty"};
 	}};
 }
 
 Parser<char> any_char()
 {
-	return Parser<char>{[](Input input) {
-		ParsingResult<char> result;
-		return input.empty()
-			? result = ParsingError{"any_char: input is empty"}
-			: result = make_tuple(input[0], input.substr(1));
+	return Parser<char>{[](Input input) -> ParsingResult<char> {
+		if (input.empty())
+			return ParsingError{"any_char: input is empty"};
+		else
+			return make_tuple(input[0], input.substr(1));
 	}};
 }
 
 Parser<char> parse_char(char c)
 {
-	return Parser<char>{[=](Input input) {
-		ParsingResult<char> result;
-
+	return Parser<char>{[=](Input input) -> ParsingResult<char> {
 		auto pfx = [=](string msg){
 			return "parse_char('" + char_as_str(c) + "'): " + msg;
 		};
 
 		if (input.empty())
-			return result = ParsingError{pfx("input is empty")};
+			return ParsingError{pfx("input is empty")};
 		else if (input[0] != c)
-			return result = ParsingError{pfx(
+			return ParsingError{pfx(
 				"char is different, got this: '" + char_as_str(input[0]) + "'"
 			)};
 		else
-			return result = make_tuple(input[0], input.substr(1));
+			return make_tuple(input[0], input.substr(1));
 	}};
 }
 
@@ -289,9 +283,7 @@ Parser<string> any_string()
 
 Parser<string> parse_string(string s)
 {
-	return Parser<string>{[=](Input input) {
-		ParsingResult<string> result;
-
+	return Parser<string>{[=](Input input) -> ParsingResult<string> {
 		auto pfx = [=](string msg){
 			return "parse_string(\"" + s + "\"): " + msg;
 		};
@@ -299,17 +291,17 @@ Parser<string> parse_string(string s)
 		string taken_string;
 
 		if (input.empty())
-			return result = ParsingError{pfx("input is empty")};
+			return ParsingError{pfx("input is empty")};
 		else if (input.size() < s.size())
-			return result = ParsingError{pfx(
+			return ParsingError{pfx(
 				"input is less than string (input is: \"" + input + "\")"
 			)};
 		else if ((taken_string = input.substr(0, s.size())) != s)
-			return result = ParsingError{pfx(
+			return ParsingError{pfx(
 				"string is different, got this: \"" + taken_string + "\""
 			)};
 		else
-			return result = make_tuple(taken_string, input.substr(s.size()));
+			return make_tuple(taken_string, input.substr(s.size()));
 	}};
 }
 

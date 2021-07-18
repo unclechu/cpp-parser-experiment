@@ -71,55 +71,55 @@ struct Parser: function<ParsingResult<A>(Input)> {};
 
 template <typename A, typename B>
 // (<$>) :: (a → b) → Parser a → Parser b
-Parser<B> fmapParser(function<B(A)> mapFn, Parser<A> parser)
+Parser<B> fmap_parser(function<B(A)> map_fn, Parser<A> parser)
 {
 	return Parser<B>{[=](Input input) {
 		return visit(overloaded {
 			[=](ParsingSuccess<A> x) -> ParsingResult<B> {
 				auto [ value, tail ] = x;
-				return make_tuple(mapFn(value), tail);
+				return make_tuple(map_fn(value), tail);
 			},
 			[](ParsingError err) -> ParsingResult<B> { return err; },
 		}, parser(input));
 	}};
 }
 template <typename A, typename B>
-// Operator equivalent for “fmapParser”
-Parser<B> operator^(function<B(A)> mapFn, Parser<A> parser)
+// Operator equivalent for “fmap_parser”
+Parser<B> operator^(function<B(A)> map_fn, Parser<A> parser)
 {
-	return fmapParser<A, B>(mapFn, parser);
+	return fmap_parser<A, B>(map_fn, parser);
 }
 template <typename A, typename B>
 // Flipped version of “fmap” (like (<&>) comparing to (<$>))
-Parser<B> operator&(Parser<A> parser, function<B(A)> mapFn)
+Parser<B> operator&(Parser<A> parser, function<B(A)> map_fn)
 {
-	return fmapParser<A, B>(mapFn, parser);
+	return fmap_parser<A, B>(map_fn, parser);
 }
 
 template <typename A, typename B>
 // (<$) :: a → Parser b → Parser a
-Parser<A> voidRight(A toValue, Parser<B> parser)
+Parser<A> void_right(A to_value, Parser<B> parser)
 {
-	return fmapParser<B, A>([=](B) { return toValue; }, parser);
+	return fmap_parser<B, A>([=](B) { return to_value; }, parser);
 }
 template <typename A, typename B>
-// Operator equivalent for “voidRight”
-Parser<A> operator<=(A toValue, Parser<B> parser)
+// Operator equivalent for “void_right”
+Parser<A> operator<=(A to_value, Parser<B> parser)
 {
-	return voidRight<A, B>(toValue, parser);
+	return void_right<A, B>(to_value, parser);
 }
 
 template <typename A, typename B>
 // ($>) :: Parser a → b → Parser b
-Parser<B> voidLeft(Parser<A> parser, B toValue)
+Parser<B> void_left(Parser<A> parser, B to_value)
 {
-	return voidRight(toValue, parser);
+	return void_right(to_value, parser);
 }
 template <typename A, typename B>
-// Operator equivalent for “voidLeft”
-Parser<B> operator>=(Parser<A> parser, B toValue)
+// Operator equivalent for “void_left”
+Parser<B> operator>=(Parser<A> parser, B to_value)
 {
-	return voidLeft<A, B>(parser, toValue);
+	return void_left<A, B>(parser, to_value);
 }
 
 // }}}2
@@ -134,63 +134,63 @@ Parser<A> pure(A x)
 
 template <typename A, typename B>
 // (<*>) :: Parser (a → b) → Parser a → Parser b
-Parser<B> apply(Parser<function<B(A)>> fnParser, Parser<A> parser)
+Parser<B> apply(Parser<function<B(A)>> fn_parser, Parser<A> parser)
 {
 	return Parser<B>{[=](Input input) -> ParsingResult<B> {
 		return visit(overloaded {
 			[=](ParsingSuccess<function<B(A)>> x) -> ParsingResult<B> {
 				auto [ fn, tail ] = x;
-				return fmapParser<A, B>(fn, parser)(tail);
+				return fmap_parser<A, B>(fn, parser)(tail);
 			},
 			[](ParsingError err) -> ParsingResult<B> { return err; }
-		}, fnParser(input));
+		}, fn_parser(input));
 	}};
 }
 template <typename A, typename B>
 // Operator equivalent for “apply”
-Parser<B> operator^(Parser<function<B(A)>> fnParser, Parser<A> parser)
+Parser<B> operator^(Parser<function<B(A)>> fn_parser, Parser<A> parser)
 {
-	return apply<A, B>(fnParser, parser);
+	return apply<A, B>(fn_parser, parser);
 }
 
 template <typename A, typename B>
 // (<*) :: Parser a → Parser b → Parser a
-Parser<A> applyFirst(Parser<A> parserA, Parser<B> parserB)
+Parser<A> apply_first(Parser<A> parser_a, Parser<B> parser_b)
 {
-	// (\a _ -> a) <$> parserA <*> parserB
+	// (\a _ -> a) <$> parser_a <*> parser_b
 	return apply<B, A>(
-		fmapParser<A, function<A(B)>>(
+		fmap_parser<A, function<A(B)>>(
 			[](A a) { return [=](B) { return a; }; },
-			parserA
+			parser_a
 		),
-		parserB
+		parser_b
 	);
 }
 template <typename A, typename B>
-// Operator equivalent for “applyFirst”
-Parser<A> operator<<(Parser<A> parserA, Parser<B> parserB)
+// Operator equivalent for “apply_first”
+Parser<A> operator<<(Parser<A> parser_a, Parser<B> parser_b)
 {
-	return applyFirst<A, B>(parserA, parserB);
+	return apply_first<A, B>(parser_a, parser_b);
 }
 
 template <typename A, typename B>
 // (*>) :: Parser a → Parser b → Parser b
-Parser<B> applySecond(Parser<A> parserA, Parser<B> parserB)
+Parser<B> apply_second(Parser<A> parser_a, Parser<B> parser_b)
 {
-	// (\_ b -> b) <$> parserA <*> parserB
+	// (\_ b -> b) <$> parser_a <*> parser_b
 	return apply<B, B>(
-		fmapParser<A, function<B(B)>>(
+		fmap_parser<A, function<B(B)>>(
 			[](A) { return [](B b) { return b; }; },
-			parserA
+			parser_a
 		),
-		parserB
+		parser_b
 	);
 }
 template <typename A, typename B>
-// Operator equivalent for “applySecond”
-Parser<B> operator>>(Parser<A> parserA, Parser<B> parserB)
+// Operator equivalent for “apply_second”
+Parser<B> operator>>(Parser<A> parser_a, Parser<B> parser_b)
 {
-	return applySecond<A, B>(parserA, parserB);
+	return apply_second<A, B>(parser_a, parser_b);
 }
 
 // }}}2
@@ -199,19 +199,19 @@ Parser<B> operator>>(Parser<A> parserA, Parser<B> parserB)
 
 template <typename A, typename B>
 // either :: (a → c) → (b → c) → Either a b → c
-function<B(ParsingResult<A>)> parsingResolver(
-	function<B(ParsingError)> failureResolve,
-	function<B(A)> successResolve
+function<B(ParsingResult<A>)> parsing_resolver(
+	function<B(ParsingError)> failure_resolve,
+	function<B(A)> success_resolve
 )
 {
 	return [=](ParsingResult<A> result) {
 		return visit(overloaded {
 			[=](ParsingSuccess<A> x) -> B {
 				auto [ value, _ ] = x;
-				return successResolve(value);
+				return success_resolve(value);
 			},
 			[=](ParsingError err) -> B {
-				return failureResolve(err);
+				return failure_resolve(err);
 			}
 		}, result);
 	};
@@ -227,7 +227,7 @@ variant<ParsingError, A> parse(Parser<A> parser, Input input)
 {
 	using Result = variant<ParsingError, A>;
 	return parse<A, Result>(
-		parsingResolver<A, Result>(
+		parsing_resolver<A, Result>(
 			[](ParsingError err) { return err; },
 			[](A x) { return x; }
 		),
@@ -353,7 +353,7 @@ int test_basic_stuff()
 	}};*/
 	const Parser<int> test1 = pure(123);
 
-	/* const Parser<string> test2 = fmapParser<int, string>([](int x) { */
+	/* const Parser<string> test2 = fmap_parser<int, string>([](int x) { */
 	/* 	return to_string(x); */
 	/* }, test1); */
 	const Parser<string> test2 =
@@ -362,7 +362,7 @@ int test_basic_stuff()
 	const Parser<bool> test3 = test2 >= true;
 
 	/* const Parser<function<string(bool)>> test4 = */
-	/* 	voidRight<function<string(bool)>, bool>( */
+	/* 	void_right<function<string(bool)>, bool>( */
 	/* 		[](bool x) { return x ? "yes" : "no"; }, */
 	/* 		test3 */
 	/* 	); */
@@ -373,10 +373,10 @@ int test_basic_stuff()
 	/* const Parser<string> test5 = apply<bool, string>(test4, test3); */
 	const Parser<string> test5 = test4 ^ test3;
 
-	/* const Parser<int> test6 = applyFirst<int, string>(test1, test5); */
+	/* const Parser<int> test6 = apply_first<int, string>(test1, test5); */
 	const Parser<int> test6 = test1 << test5;
 
-	/* const Parser<string> test7 = applySecond<int, string>(test6, test5); */
+	/* const Parser<string> test7 = apply_second<int, string>(test6, test5); */
 	const Parser<string> test7 = test6 >> test5;
 
 	const Parser<string> test8 =

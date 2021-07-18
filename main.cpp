@@ -11,7 +11,17 @@
 
 using namespace std;
 
+
+// Helpers {{{1
+
 struct Unit: tuple<> {};
+
+// Helpers for pattern-matching-ish syntax for std::visit taken from here:
+// https://en.cppreference.com/w/cpp/utility/variant/visit
+template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
+template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
+
+// }}}1
 
 
 // Free JSON value representation type {{{1
@@ -63,15 +73,14 @@ template <typename A, typename B>
 // (<$>) :: (a → b) → Parser a → Parser b
 Parser<B> fmapParser(function<B(A)> mapFn, Parser<A> parser)
 {
-	return Parser<B>{[=](Input input) -> ParsingResult<B> {
-		auto parsingResult = parser(input);
-
-		if (auto x = get_if<ParsingSuccess<A>>(&parsingResult)) {
-			auto [ value, tail ] = *x;
-			return make_tuple(mapFn(value), tail);
-		} else {
-			return get<ParsingError>(parsingResult);
-		}
+	return Parser<B>{[=](Input input) {
+		return visit(overloaded {
+			[=](ParsingSuccess<A> x) -> ParsingResult<B> {
+				auto [ value, tail ] = x;
+				return make_tuple(mapFn(value), tail);
+			},
+			[](ParsingError err) -> ParsingResult<B> { return err; },
+		}, parser(input));
 	}};
 }
 template <typename A, typename B>
@@ -128,13 +137,13 @@ template <typename A, typename B>
 Parser<B> apply(Parser<function<B(A)>> fnParser, Parser<A> parser)
 {
 	return Parser<B>{[=](Input input) -> ParsingResult<B> {
-		auto parsingResult = fnParser(input);
-
-		if (auto err = get_if<ParsingError>(&parsingResult))
-			return *err;
-
-		auto [ fn, tail ] = get<ParsingSuccess<function<B(A)>>>(parsingResult);
-		return fmapParser<A, B>(fn, parser)(tail);
+		return visit(overloaded {
+			[=](ParsingSuccess<function<B(A)>> x) -> ParsingResult<B> {
+				auto [ fn, tail ] = x;
+				return fmapParser<A, B>(fn, parser)(tail);
+			},
+			[](ParsingError err) -> ParsingResult<B> { return err; }
+		}, fnParser(input));
 	}};
 }
 template <typename A, typename B>
@@ -196,12 +205,15 @@ function<B(ParsingResult<A>)> parsingResolver(
 )
 {
 	return [=](ParsingResult<A> result) {
-		if (auto x = get_if<ParsingSuccess<A>>(&result)) {
-			auto [ value, _ ] = *x;
-			return successResolve(value);
-		} else {
-			return failureResolve(get<ParsingError>(result));
-		}
+		return visit(overloaded {
+			[=](ParsingSuccess<A> x) -> B {
+				auto [ value, _ ] = x;
+				return successResolve(value);
+			},
+			[=](ParsingError err) -> B {
+				return failureResolve(err);
+			}
+		}, result);
 	};
 }
 

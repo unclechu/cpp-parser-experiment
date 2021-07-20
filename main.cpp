@@ -127,6 +127,7 @@ Parser<B> operator>=(Parser<A> parser, B to_value)
 // Applicative-like stuff {{{2
 
 template <typename A>
+// pure :: Applicative f => a -> Parser a
 Parser<A> pure(A x)
 {
 	return Parser<A>{[=](Input input) { return make_tuple(x, input); }};
@@ -191,6 +192,16 @@ template <typename A, typename B>
 Parser<B> operator>>(Parser<A> parser_a, Parser<B> parser_b)
 {
 	return apply_second<A, B>(parser_a, parser_b);
+}
+
+// }}}2
+
+// MonadFail {{{2
+
+template <typename A = Unit>
+Parser<A> fail_parser(string err)
+{
+	return Parser<A>{[=](Input) { return ParsingError{err}; }};
 }
 
 // }}}2
@@ -546,6 +557,45 @@ int run_test_cases()
 		}, result),
 		">yes<"
 	);
+
+	{
+		const Parser<int> test_fail =
+			fail_parser("Failed to parse") >> test_apply_first;
+		test->should_be<ParsingResult<int>>(
+			"‘fail_parser’ fails the parser",
+			test_fail("foo"),
+			ParsingError{"Failed to parse"}
+		);
+	}{
+		const Parser<int> test_fail =
+			test_apply_first << fail_parser("Failed to parse");
+		test->should_be<ParsingResult<int>>(
+			"‘fail_parser’ fails the parser no matter in what order it’s composed",
+			test_fail("foo"),
+			ParsingError{"Failed to parse"}
+		);
+	}{
+		const Parser<int> test_fail = 123 <= fail_parser("Failed to parse");
+		test->should_be<ParsingResult<int>>(
+			"‘fail_parser’ fails with ‘<=’ operator (‘void_right’)",
+			test_fail("foo"),
+			ParsingError{"Failed to parse"}
+		);
+	}{
+		const Parser<int> test_fail = fail_parser("Failed to parse") >= 123;
+		test->should_be<ParsingResult<int>>(
+			"‘fail_parser’ fails with ‘<=’ operator (‘void_left’)",
+			test_fail("foo"),
+			ParsingError{"Failed to parse"}
+		);
+	}{
+		const Parser<int> test_fail = fail_parser<int>("Failed to parse");
+		test->should_be<ParsingResult<int>>(
+			"‘fail_parser’ fails alone having any type",
+			test_fail("foo"),
+			ParsingError{"Failed to parse"}
+		);
+	}
 
 	test_composition_of_simple_parsers(test);
 	return test->resolve() ? EXIT_SUCCESS : EXIT_FAILURE;

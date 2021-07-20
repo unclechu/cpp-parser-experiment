@@ -374,9 +374,7 @@ Parser<string> parse_string(string s)
 // }}}1
 
 
-class Test;
 int run_test_cases();
-void test_composition_of_simple_parsers(shared_ptr<Test> test);
 
 int main()
 {
@@ -461,10 +459,20 @@ public:
 
 // }}}2
 
+class Test;
+void test_basic_boilerplate(shared_ptr<Test> test);
+void test_composition_of_simple_parsers(shared_ptr<Test> test);
+
 int run_test_cases()
 {
 	const shared_ptr<Test> test = make_shared<Test>();
+	test_basic_boilerplate(test);
+	test_composition_of_simple_parsers(test);
+	return test->resolve() ? EXIT_SUCCESS : EXIT_FAILURE;
+}
 
+void test_basic_boilerplate(shared_ptr<Test> test)
+{
 	const Parser<int> test_pure = pure(123);
 	test->should_be<ParsingResult<int>>(
 		"‘pure’ does not parse anything and returns the provided value",
@@ -704,9 +712,6 @@ int run_test_cases()
 		);
 	}
 	// }}}3
-
-	test_composition_of_simple_parsers(test);
-	return test->resolve() ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
 void test_composition_of_simple_parsers(shared_ptr<Test> test)

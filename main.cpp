@@ -320,89 +320,255 @@ Parser<string> parse_string(string s)
 // }}}1
 
 
-int test_basic_stuff();
-int test_composition_of_simple_parsers();
+class Test;
+int run_test_cases();
+void test_composition_of_simple_parsers(shared_ptr<Test> test);
 
 int main()
 {
-	//TODO call depending on arguments
-	//return test_basic_stuff();
-	return test_composition_of_simple_parsers();
+	return run_test_cases();
 }
 
 
-// Stupid WIP tests {{{1
+// Primitive testing {{{1
+
+// Testing helpers {{{2
 
 template <typename T>
-int debug_a_test(variant<ParsingError, T> result)
+ostream& operator<<(ostream &out, ParsingResult<T> &x)
 {
-	if (auto x = get_if<ParsingError>(&result)) {
-		cerr << "Failed to parse: " << *x << endl;
-		return EXIT_FAILURE;
-	} else {
-		cout << "Successfully parsed: " << get<T>(result) << endl;
-		return EXIT_SUCCESS;
+	return visit(overloaded {
+		[&](ParsingError err) -> ostream& {
+			return out << "ParsingError{" << err << "}";
+		},
+		[&](ParsingSuccess<T> success_value) -> ostream& {
+			auto [ value, input ] = success_value;
+			return out
+				<< "ParsingSuccess{value=‘" << value
+				<< "’, tail=‘" << input << "’}";
+		}
+	}, x);
+}
+
+class Test
+{
+private:
+	unsigned int done = 0;
+	unsigned int failed = 0;
+
+	static void log(
+		ostream& out,
+		const string title,
+		const function<void(ostream&)> what_is_tested,
+		const bool resolve
+	)
+	{
+		out << title << ":" << endl << "  ";
+		what_is_tested(out);
+		out << endl << "  ";
+		out << (resolve ? "[SUCCESS]" : "!!! [FAILURE] !!! ") << endl << endl;
 	}
-}
 
-int test_basic_stuff()
+public:
+	template <typename T>
+	void should_be(const string title, T value, T should_be_this)
+	{
+		++this->done;
+
+		const auto log_what = [&](ostream& out) {
+			out << "“" << value << "” should be equal to “";
+			out << should_be_this << "”…";
+		};
+
+		if (value == should_be_this) {
+			this->log(cout, title, log_what, true);
+		} else {
+			++this->failed;
+			this->log(cerr, title, log_what, false);
+		}
+	}
+
+	// bool indicates whether all the tests were successful
+	bool resolve()
+	{
+		if (failed > 0) {
+			cerr
+				<< "Executed " << done << " test(s) and "
+				<< failed << " of them have failed" << endl;
+			return false;
+		} else {
+			cout
+				<< "Executed " << done
+				<< " test(s) and all of them were successful" << endl;
+			return true;
+		}
+	}
+};
+
+// }}}2
+
+int run_test_cases()
 {
-	/*const Parser<int> test1 = Parser<int>{[](string x) {
-		// return make_tuple(123, x);
-		return ParsingError{"oh no!"};
-	}};*/
-	const Parser<int> test1 = pure(123);
+	const shared_ptr<Test> test = make_shared<Test>();
 
-	/* const Parser<string> test2 = fmap_parser<int, string>([](int x) { */
-	/* 	return to_string(x); */
-	/* }, test1); */
-	const Parser<string> test2 =
-		function<string(int)>([](int x) { return to_string(x); }) ^ test1;
-
-	const Parser<bool> test3 = test2 >= true;
-
-	/* const Parser<function<string(bool)>> test4 = */
-	/* 	void_right<function<string(bool)>, bool>( */
-	/* 		[](bool x) { return x ? "yes" : "no"; }, */
-	/* 		test3 */
-	/* 	); */
-	const Parser<function<string(bool)>> test4 =
-		function<string(bool)>([](bool x) { return x ? "yes" : "no"; })
-			<= test3;
-
-	/* const Parser<string> test5 = apply<bool, string>(test4, test3); */
-	const Parser<string> test5 = test4 ^ test3;
-
-	/* const Parser<int> test6 = apply_first<int, string>(test1, test5); */
-	const Parser<int> test6 = test1 << test5;
-
-	/* const Parser<string> test7 = apply_second<int, string>(test6, test5); */
-	const Parser<string> test7 = test6 >> test5;
-
-	const Parser<string> test8 =
-		test7 & function<string(string)>([](string x) { return ">"+x+"<"; });
-
-	using T = string;
-	const variant<ParsingError, T> result = parse<T>(test8, "foobar");
-	return debug_a_test(result);
-}
-
-int test_composition_of_simple_parsers()
-{
-	using T = string;
-	const variant<ParsingError, T> result = parse<T>(
-		function<function<function<string(string)>(char)>(char)>(
-			[](char a) { return [=](char b) { return [=](string c) {
-				return char_as_str(a) + char_as_str(b) + "|" + c;
-			}; }; }
-		)
-			^ any_char()
-			^ parse_char('o')
-			^ parse_string("obar")
-			<< end_of_input(),
-		"foobar"
+	const Parser<int> test_pure = pure(123);
+	test->should_be<ParsingResult<int>>(
+		"‘pure’ does not parse anything and returns the provided value",
+		test_pure("foo"),
+		make_tuple(123, "foo")
 	);
-	return debug_a_test(result);
+
+	const Parser<string> test_fmap = [&](){
+		const function<string(int)> map_fn = [](int x) { return to_string(x); };
+
+		const Parser<string> test_fn =
+			fmap_parser<int, string>(map_fn, test_pure);
+		test->should_be<ParsingResult<string>>(
+			"‘fmap_parser’ (int to string conversion)",
+			test_fn("foo"),
+			make_tuple("123", "foo")
+		);
+
+		const Parser<string> test_op = map_fn ^ test_pure;
+		test->should_be<ParsingResult<string>>(
+			"Operator ‘^’ for ‘fmap_parser’ (int to string conversion)",
+			test_op("foo"),
+			make_tuple("123", "foo")
+		);
+
+		return test_op;
+	}();
+
+	const Parser<bool> test_void_left = [&](){
+		const Parser<bool> test_fn = void_left<string, bool>(test_fmap, true);
+		test->should_be<ParsingResult<bool>>(
+			"‘void_left’ (voiding string, replacing with bool)",
+			test_fn("foo"),
+			make_tuple(true, "foo")
+		);
+
+		const Parser<bool> test_op = test_fmap >= true;
+		test->should_be<ParsingResult<bool>>(
+			string("Operator ‘>=’ for ‘void_left’ ")
+				+ "(voiding string, replacing with bool)",
+			test_op("foo"),
+			make_tuple(true, "foo")
+		);
+
+		return test_op;
+	}();
+
+	const Parser<function<string(bool)>> test_void_right = [&](){
+		using T = function<string(bool)>;
+		T f = [](bool x) { return x ? "yes" : "no"; };
+
+		// Only testing that template compiles, see the following “test_apply”
+		const Parser<T> test_fn = void_right<T, bool>(f, test_void_left);
+		const Parser<T> test_op = f <= test_void_left;
+
+		return test_op;
+	}();
+
+	const Parser<string> test_apply = [&](){
+		const Parser<string> test_fn =
+			apply<bool, string>(test_void_right, test_void_left);
+		test->should_be<ParsingResult<string>>(
+			"‘apply’ (applying wrapped function on wrapped argument)",
+			test_fn("foo"),
+			make_tuple("yes", "foo")
+		);
+
+		const Parser<string> test_op = test_void_right ^ test_void_left;
+		test->should_be<ParsingResult<string>>(
+			string("Operator ‘^’ for ‘apply’ ")
+				+ "(applying wrapped function on wrapped argument)",
+			test_op("foo"),
+			make_tuple("yes", "foo")
+		);
+
+		return test_op;
+	}();
+
+	const Parser<int> test_apply_first = [&](){
+		const Parser<int> test_fn =
+			apply_first<int, string>(test_pure, test_apply);
+		test->should_be<ParsingResult<int>>(
+			"‘apply_first’ (discard right value, keep left one)",
+			test_fn("foo"),
+			make_tuple(123, "foo")
+		);
+
+		const Parser<int> test_op = test_pure << test_apply;
+		test->should_be<ParsingResult<int>>(
+			"Operator ‘<<’ for ‘apply_first’ (discard right value, keep left one)",
+			test_op("foo"),
+			make_tuple(123, "foo")
+		);
+
+		return test_op;
+	}();
+
+	const Parser<string> test_apply_second = [&](){
+		const Parser<string> test_fn =
+			apply_second<int, string>(test_apply_first, test_apply);
+		test->should_be<ParsingResult<string>>(
+			"‘apply_second’ (discard left value, keep right one)",
+			test_fn("foo"),
+			make_tuple("yes", "foo")
+		);
+
+		const Parser<string> test_op = test_apply_first >> test_apply;
+		test->should_be<ParsingResult<string>>(
+			"‘apply_second’ (discard left value, keep right one)",
+			test_op("foo"),
+			make_tuple("yes", "foo")
+		);
+
+		return test_op;
+	}();
+
+	const Parser<string> test_flipped_fmap =
+		test_apply_second
+			& function<string(string)>([](string x) { return ">"+x+"<"; });
+	test->should_be<ParsingResult<string>>(
+		"‘&’ (flipped fmap operator) maps the value",
+		test_flipped_fmap("foo"),
+		make_tuple(">yes<", "foo")
+	);
+
+	const variant<ParsingError, string> result =
+		parse<string>(test_flipped_fmap, "foobar");
+	test->should_be<string>(
+		"‘parse’ returns correct result",
+		visit(overloaded {
+			[](ParsingError err) { return "ParsingError{" + err + "}"; },
+			[](string x) { return x; }
+		}, result),
+		">yes<"
+	);
+
+	test_composition_of_simple_parsers(test);
+	return test->resolve() ? EXIT_SUCCESS : EXIT_FAILURE;
+}
+
+void test_composition_of_simple_parsers(shared_ptr<Test> test)
+{
+	{
+		const ParsingResult<string> result = (
+			function<function<function<string(string)>(char)>(char)>(
+				[](char a) { return [=](char b) { return [=](string c) {
+					return char_as_str(a) + char_as_str(b) + "|" + c;
+				}; }; }
+			)
+				^ any_char()
+				^ parse_char('o')
+				^ parse_string("obar")
+				<< end_of_input()
+		)("foobar");
+
+		test->should_be<ParsingResult<string>>
+			("‘foobar’ is fully parsed", result, make_tuple("fo|obar", ""));
+	}
 }
 
 // }}}1

@@ -8,6 +8,7 @@
 #include <map>
 #include <optional>
 #include <typeinfo>
+#include <vector>
 
 using namespace std;
 
@@ -202,6 +203,48 @@ template <typename A = Unit>
 Parser<A> fail_parser(string err)
 {
 	return Parser<A>{[=](Input) { return ParsingError{err}; }};
+}
+
+// }}}2
+
+// Alternative {{{2
+
+template <typename A>
+// (<|>) :: Alternative f => f a -> f a -> f a
+Parser<A> alt(Parser<A> parser_a, Parser<A> parser_b)
+{
+	return Parser<A>{[=](Input input) {
+		return visit(overloaded {
+			[=](ParsingError) -> ParsingResult<A> { return parser_b(input); },
+			[](ParsingSuccess<A> x) -> ParsingResult<A> { return x; }
+		}, parser_a(input));
+	}};
+}
+template <typename A>
+// Operator equivalent for “alt”
+Parser<A> operator||(Parser<A> a, Parser<A> b)
+{
+	return alt<A>(a, b);
+}
+
+template <typename A>
+// One or more.
+// some :: Alternative f => f a -> f [a]
+Parser<vector<A>> some(Parser<A> parser)
+{
+	return Parser<vector<A>>{[=](Input input) {
+		return ;
+	}};
+}
+
+template <typename A>
+// Zero or more.
+// many :: Alternative f => f a -> f [a]
+Parser<vector<A>> many(Parser<A> parser)
+{
+	return Parser<vector<A>>{[=](Input input) {
+		return ;
+	}};
 }
 
 // }}}2
@@ -558,6 +601,7 @@ int run_test_cases()
 		">yes<"
 	);
 
+	// Fail parser {{{3
 	{
 		const Parser<int> test_fail =
 			fail_parser("Failed to parse") >> test_apply_first;
@@ -596,6 +640,70 @@ int run_test_cases()
 			ParsingError{"Failed to parse"}
 		);
 	}
+	// }}}3
+
+	// Alternative {{{3
+	{
+		const Parser<int> test_two_pure = alt(pure(10), pure(20));
+		test->should_be<ParsingResult<int>>(
+			"‘alt’ returns first when have two successful values",
+			test_two_pure("foo"),
+			make_tuple(10, "foo")
+		);
+		const Parser<int> test_two_pure_op = pure(10) || pure(20);
+		test->should_be<ParsingResult<int>>(
+			"‘||’ works the same way as ‘alt’",
+			test_two_pure_op("foo"),
+			make_tuple(10, "foo")
+		);
+
+		const Parser<int> test_second_pure =
+			fail_parser<int>("failure") || pure(20);
+		test->should_be<ParsingResult<int>>(
+			"‘alt’ returns second when first is a failure",
+			test_second_pure("foo"),
+			make_tuple(20, "foo")
+		);
+
+		const Parser<int> test_both_failed =
+			fail_parser<int>("one") || fail_parser<int>("two");
+		test->should_be<ParsingResult<int>>(
+			"‘alt’ returns last error if both have failed",
+			test_both_failed("foo"),
+			ParsingError{"two"}
+		);
+
+		const Parser<int> test_three_failed =
+			fail_parser<int>("one")
+				|| fail_parser<int>("two")
+				|| fail_parser<int>("three");
+		test->should_be<ParsingResult<int>>(
+			"‘alt’ returns last error if three have failed",
+			test_three_failed("foo"),
+			ParsingError{"three"}
+		);
+
+		const Parser<int> test_three_second_successful =
+			fail_parser<int>("one")
+				|| pure(20)
+				|| fail_parser<int>("three");
+		test->should_be<ParsingResult<int>>(
+			"‘alt’ returns second successful when 2 other failed",
+			test_three_second_successful("foo"),
+			make_tuple(20, "foo")
+		);
+
+		const Parser<int> test_three_last_successful =
+			fail_parser<int>("one")
+				|| fail_parser<int>("two")
+				|| pure(30);
+		test->should_be<ParsingResult<int>>(
+			"‘alt’ returns last successful when 2 other failed",
+			test_three_last_successful("foo"),
+			make_tuple(30, "foo")
+		);
+	}
+	// }}}3
 
 	test_composition_of_simple_parsers(test);
 	return test->resolve() ? EXIT_SUCCESS : EXIT_FAILURE;

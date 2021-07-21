@@ -5,10 +5,13 @@
 #include <list>
 #include <memory>
 #include <string>
+#include <sstream>
 #include <map>
 #include <optional>
 #include <typeinfo>
 #include <vector>
+#include <iterator>
+#include <algorithm>
 
 using namespace std;
 
@@ -230,16 +233,47 @@ Parser<A> operator||(Parser<A> a, Parser<A> b)
 template <typename A>
 // One or more.
 // some :: Alternative f => f a -> f [a]
+// WARNING! Do not apply on parsers that are always successful (like “pure(…)”)
+// The recursion will never end in this case. It doesn’t mean you can’t compose
+// “pure” with parsers that are used with this function. The only point is that
+// parser must fail at some point to finalize the resulting list.
 Parser<vector<A>> some(Parser<A> parser)
 {
 	return Parser<vector<A>>{[=](Input input) {
-		return ;
+		return visit(overloaded {
+			[](ParsingError err) -> ParsingResult<vector<A>> { return err; },
+			[parser](ParsingSuccess<A> first) -> ParsingResult<vector<A>> {
+				auto [ first_element, first_tail ] = first;
+				vector<A> list = { first_element };
+
+				using RecurResult = ParsingSuccess<vector<A>>;
+				using RecurFn = function<RecurResult(Input)>;
+				RecurFn recur = [&recur, &list, parser](Input tail) {
+					return visit(overloaded {
+						[&list, tail](ParsingError) -> RecurResult {
+							return make_tuple(list, tail);
+						},
+						[&list, &recur](ParsingSuccess<A> current) -> RecurResult {
+							auto [ current_element, current_tail ] = current;
+							list.push_back(current_element);
+							return recur(current_tail);
+						}
+					}, parser(tail));
+				};
+
+				return recur(first_tail);
+			}
+		}, parser(input));
 	}};
 }
 
 template <typename A>
 // Zero or more.
 // many :: Alternative f => f a -> f [a]
+// WARNING! Do not apply on parsers that are always successful (like “pure(…)”)
+// The recursion will never end in this case. It doesn’t mean you can’t compose
+// “pure” with parsers that are used with this function. The only point is that
+// parser must fail at some point to finalize the resulting list.
 Parser<vector<A>> many(Parser<A> parser)
 {
 	return Parser<vector<A>>{[=](Input input) {
@@ -651,7 +685,7 @@ void test_basic_boilerplate(shared_ptr<Test> test)
 	// }}}3
 
 	// Alternative {{{3
-	{
+	{ // “alt” {{{4
 		const Parser<int> test_two_pure = alt(pure(10), pure(20));
 		test->should_be<ParsingResult<int>>(
 			"‘alt’ returns first when have two successful values",
@@ -710,7 +744,47 @@ void test_basic_boilerplate(shared_ptr<Test> test)
 			test_three_last_successful("foo"),
 			make_tuple(30, "foo")
 		);
-	}
+	} // }}}4
+	{ // “some” {{{4
+		function<string(vector<string>)> debug_list_of_strings =
+			[](vector<string> list) -> string {
+				if (list.empty()) return "0:list_is_empty";
+				ostringstream out;
+				out << list.size() << ":";
+				ostream_iterator<string> out_iterator (out, ",");
+				copy(list.begin(), list.end()-1, out_iterator);
+				out << list.back(); // last element without separator
+				return out.str();
+			};
+
+		const Parser<string> foobarbaz_parser =
+			parse_char('(')
+			>> (parse_string("foo") || parse_string("bar") || parse_string("baz"))
+			<< parse_char (')');
+
+		const Parser<vector<string>> test_3_elems =
+			some<string>(foobarbaz_parser);
+		test->should_be<ParsingResult<string>>(
+			"‘some’ parses ‘(foo)(bar)(baz) as 3 elements’",
+			(debug_list_of_strings ^ test_3_elems)("(foo)(bar)(baz)tail"),
+			make_tuple("3:foo,bar,baz", "tail")
+		);
+
+		const Parser<vector<string>> test_3_elems_in_reverse =
+			some<string>(foobarbaz_parser);
+		test->should_be<ParsingResult<string>>(
+			"‘some’ parses ‘(baz)(bar)(foo)’ as 3 elements",
+			(debug_list_of_strings ^ test_3_elems_in_reverse)("(baz)(bar)(foo)tail"),
+			make_tuple("3:baz,bar,foo", "tail")
+		);
+
+		const Parser<vector<string>> test_1_elem = some<string>(foobarbaz_parser);
+		test->should_be<ParsingResult<string>>(
+			"‘some’ parses ‘(bar)’ as 1 element",
+			(debug_list_of_strings ^ test_1_elem)("(bar)tail"),
+			make_tuple("1:bar", "tail")
+		);
+	} // }}}4
 	// }}}3
 }
 

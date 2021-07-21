@@ -405,6 +405,28 @@ Parser<string> parse_string(string s)
 	}};
 }
 
+/*
+// TODO implement
+Parser<int> unsigned_decimal()
+{
+}
+
+// TODO implement
+Parser<int> signed_decimal()
+{
+}
+
+// TODO implement
+Parser<double> unsigned_fractional()
+{
+}
+
+// TODO implement
+Parser<double> signed_fractional()
+{
+}
+*/
+
 // }}}1
 
 

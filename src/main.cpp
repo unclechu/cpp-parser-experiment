@@ -1,5 +1,4 @@
 #include "helpers.hpp"
-#include "main.hpp"
 #include "test.hpp"
 
 int main()

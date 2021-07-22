@@ -1,6 +1,8 @@
 #ifndef _HELPERS_HPP_
 #define _HELPERS_HPP_
 
+#include <functional>
+#include <optional>
 #include <tuple>
 
 struct Unit: std::tuple<> {};
@@ -9,5 +11,17 @@ struct Unit: std::tuple<> {};
 // https://en.cppreference.com/w/cpp/utility/variant/visit
 template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
 template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
+
+template <typename A>
+std::function<A(A)> const_map(A x)
+{
+	return [=](A) { return x; };
+}
+
+template <typename A>
+std::optional<A> to_optional(A x)
+{
+	return x;
+};
 
 #endif

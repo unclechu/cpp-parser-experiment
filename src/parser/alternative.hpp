@@ -87,7 +87,7 @@ Parser<vector<A>> some(Parser<A> parser)
 	return map_parsing_failure<vector<A>>(
 		[](ParsingError err) {
 			return ParsingError{
-				"‘some’: failed to parse at least one single element: " + err
+				"some: failed to parse at least one single element: " + err
 			};
 		},
 		Parser<vector<A>>{parser_fn}

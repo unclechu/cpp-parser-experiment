@@ -1,10 +1,5 @@
 ## To Do
 
-- Implement parsers for numbers
-    * [x] unsigned decimal
-    * [x] signed decimal (reuse unsigned decimal)
-    * [ ] unsigned fractional (floating point)
-    * [ ] signed fractional (reuse unsigned fractional)
 - Implement JSON value parser
     > Combine other atomic-ish JSON parsers together in order to cover any JSON value.
     * [ ] Object parser
@@ -38,3 +33,8 @@
 - Implement “many” parser
     > In a generic way so that you take a parser and get a multiple version of it.
     * [x] Implement also “many1” for non-empty list (1 or more items in a list) -> it’s “some”
+- Implement parsers for numbers
+    * [x] unsigned decimal
+    * [x] signed decimal (reuse unsigned decimal)
+    * [x] unsigned fractional (floating point)
+    * [x] signed fractional (reuse unsigned fractional)

@@ -12,7 +12,7 @@
 using namespace std;
 
 
-template<typename A>
+template <typename A>
 Parser<A> map_parsing_failure(
 	function<ParsingError(ParsingError)> map_fn,
 	Parser<A> parser
@@ -24,6 +24,15 @@ Parser<A> map_parsing_failure(
 			[](ParsingSuccess<A> x) -> ParsingResult<A> { return x; }
 		}, parser(input));
 	}};
+}
+
+template <typename A>
+Parser<A> prefix_parsing_failure(string pfx, Parser<A> parser)
+{
+	return map_parsing_failure<A>(
+		[pfx](ParsingError err) { return ParsingError{pfx + ": " + err}; },
+		parser
+	);
 }
 
 #endif

@@ -118,6 +118,12 @@ int run_test_cases()
 	return test->resolve() ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
+template <typename A>
+inline Parser<A> simple_parsing_failure(Parser<A> parser)
+{
+	return map_parsing_failure(const_map(ParsingError{"failure"}), parser);
+}
+
 void test_basic_boilerplate(shared_ptr<Test> test)
 {
 	const Parser<int> test_pure = pure(123);
@@ -399,14 +405,12 @@ void test_basic_boilerplate(shared_ptr<Test> test)
 			make_tuple("1:bar", "tail")
 		);
 
-		const Parser<vector<string>> test_failure = map_parsing_failure(
-			const_map(ParsingError{"failed"}),
-			some<string>(foobarbaz_parser)
-		);
+		const Parser<vector<string>> test_failure =
+			simple_parsing_failure(some<string>(foobarbaz_parser));
 		test->should_be<ParsingResult<string>>(
 			"‘some’ ensures that at least one element is parsed",
 			(debug_list_of_strings ^ test_failure)("foobar"),
-			ParsingError{"failed"}
+			ParsingError{"failure"}
 		);
 	} // }}}4
 	{ // “many” {{{4
@@ -433,10 +437,8 @@ void test_basic_boilerplate(shared_ptr<Test> test)
 			make_tuple("1:bar", "tail")
 		);
 
-		const Parser<vector<string>> test_failure = map_parsing_failure(
-			const_map(ParsingError{"failed"}),
-			many<string>(foobarbaz_parser)
-		);
+		const Parser<vector<string>> test_failure =
+			simple_parsing_failure(many<string>(foobarbaz_parser));
 		test->should_be<ParsingResult<string>>(
 			"‘many’ is okay with parsing nothing (empty list)",
 			(debug_list_of_strings ^ test_failure)("foobar"),
@@ -497,28 +499,277 @@ void generic_decimal_parser_test(
 		test_parser("000tail"),
 		make_tuple(0, "tail")
 	);
+	test->should_be<ParsingResult<T>>(
+		"‘" + fn_name + "’ fails when number overflows",
+		simple_parsing_failure(test_parser)(
+			"99999999999999999999999999999999999999999999999999tail"
+		),
+		ParsingError{"failure"}
+	);
+}
+
+void generic_fractional_parser_test(
+	string fn_name,
+	Parser<double> test_parser,
+	shared_ptr<Test> test
+)
+{
+	test->should_be<ParsingResult<double>>(
+		"‘" + fn_name + "’ parses ‘123.456’",
+		test_parser("123.456tail"),
+		make_tuple(123.456, "tail")
+	);
+	test->should_be<ParsingResult<double>>(
+		"‘" + fn_name + "’ parses ‘1.0’",
+		test_parser("1.0tail"),
+		make_tuple(1.0, "tail")
+	);
+	test->should_be<ParsingResult<double>>(
+		"‘" + fn_name + "’ parses ‘0.0’",
+		test_parser("0.0tail"),
+		make_tuple(0.0, "tail")
+	);
+	test->should_be<ParsingResult<double>>(
+		"‘" + fn_name + "’ parses ‘000123.000321’ as ‘123.000321’",
+		test_parser("000123.000321tail"),
+		make_tuple(123.000321, "tail")
+	);
+	test->should_be<ParsingResult<double>>(
+		"‘" + fn_name + "’ parses ‘000123.321000’ as ‘123.321’",
+		test_parser("000123.321000tail"),
+		make_tuple(123.321, "tail")
+	);
+	test->should_be<ParsingResult<double>>(
+		"‘" + fn_name + "’ fails to parse ‘1’ (without dot)",
+		simple_parsing_failure(test_parser)("1tail"),
+		ParsingError{"failure"}
+	);
+	test->should_be<ParsingResult<double>>(
+		"‘" + fn_name + "’ fails to parse when it’s not an a digit (1)",
+		simple_parsing_failure(test_parser)("1.x"),
+		ParsingError{"failure"}
+	);
+	test->should_be<ParsingResult<double>>(
+		"‘" + fn_name + "’ fails to parse when it’s not an a digit (2)",
+		simple_parsing_failure(test_parser)("x.1"),
+		ParsingError{"failure"}
+	);
+	test->should_be<ParsingResult<double>>(
+		"‘" + fn_name + "’ fails to parse when it’s not an a digit (3)",
+		simple_parsing_failure(test_parser)("xyz"),
+		ParsingError{"failure"}
+	);
+	test->should_be<ParsingResult<double>>(
+		"‘" + fn_name + "’ fails to parse on empty input",
+		simple_parsing_failure(test_parser)(""),
+		ParsingError{"failure"}
+	);
+	test->should_be<ParsingResult<double>>(
+		"‘" + fn_name + "’ fails when number overflows",
+		simple_parsing_failure(test_parser)(
+			string("99999999999999999999999999999999999999999999999999") +
+			string("99999999999999999999999999999999999999999999999999") +
+			string("99999999999999999999999999999999999999999999999999") +
+			string("99999999999999999999999999999999999999999999999999") +
+			string("99999999999999999999999999999999999999999999999999") +
+			string("99999999999999999999999999999999999999999999999999") +
+			string("99999999999999999999999999999999999999999999999999") +
+			string("99999999999999999999999999999999999999999999999999") +
+			string("99999999999999999999999999999999999999999999999999") +
+			string("99999999999999999999999999999999999999999999999999") +
+			string("99999999999999999999999999999999999999999999999999") +
+			string(".9tail")
+		),
+		ParsingError{"failure"}
+	);
 }
 
 void test_simple_parsers(shared_ptr<Test> test)
 {
+	{ // end_of_input {{{2
+		test->should_be<ParsingResult<Unit>>(
+			"‘end_of_input’ succeeds on empty input",
+			end_of_input()(""),
+			make_tuple(unit(), "")
+		);
+	} // }}}2
+	{ // char parsers {{{2
+		{ // any_char {{{3
+			test->should_be<ParsingResult<char>>(
+				"‘any_char’ parses any char (1)",
+				any_char()("foo"),
+				make_tuple('f', "oo")
+			);
+			test->should_be<ParsingResult<char>>(
+				"‘any_char’ parses any char (2)",
+				any_char()("x"),
+				make_tuple('x', "")
+			);
+			test->should_be<ParsingResult<char>>(
+				"‘any_char’ fails on empty input",
+				simple_parsing_failure(any_char())(""),
+				ParsingError{"failure"}
+			);
+		} // }}}3
+		{ // parse_char {{{3
+			test->should_be<ParsingResult<char>>(
+				"‘parse_char’ parses specified char",
+				parse_char('f')("foo"),
+				make_tuple('f', "oo")
+			);
+			test->should_be<ParsingResult<char>>(
+				"‘parse_char’ fails to parse if char is different",
+				simple_parsing_failure(parse_char('f'))("bar"),
+				ParsingError{"failure"}
+			);
+			test->should_be<ParsingResult<char>>(
+				"‘parse_char’ fails on empty input",
+				simple_parsing_failure(parse_char('f'))(""),
+				ParsingError{"failure"}
+			);
+		} // }}}3
+		{ // not_char {{{3
+			test->should_be<ParsingResult<char>>(
+				"‘not_char’ parses char that is not equal to provided one",
+				not_char('f')("bar"),
+				make_tuple('b', "ar")
+			);
+			test->should_be<ParsingResult<char>>(
+				"‘not_char’ fails to parse if char is the same",
+				simple_parsing_failure(not_char('f'))("foo"),
+				ParsingError{"failure"}
+			);
+			test->should_be<ParsingResult<char>>(
+				"‘not_char’ fails on empty input",
+				simple_parsing_failure(not_char('f'))(""),
+				ParsingError{"failure"}
+			);
+		} // }}}3
+		{ // satisfy {{{3
+			const function<bool(char)> predicate = [](char x) {
+				return x == 'f';
+			};
+			test->should_be<ParsingResult<char>>(
+				"‘satisfy’ parses char that satisfies predicate",
+				satisfy(predicate)("foo"),
+				make_tuple('f', "oo")
+			);
+			test->should_be<ParsingResult<char>>(
+				"‘satisfy’ fails to parse if char dissatisfies predicate",
+				simple_parsing_failure(satisfy(predicate))("bar"),
+				ParsingError{"failure"}
+			);
+			test->should_be<ParsingResult<char>>(
+				"‘satisfy’ fails on empty input",
+				simple_parsing_failure(satisfy(predicate))(""),
+				ParsingError{"failure"}
+			);
+		} // }}}3
+		{ // digit {{{3
+			test->should_be<ParsingResult<char>>(
+				"‘digit’ parses ‘0’",
+				digit()("0tail"),
+				make_tuple('0', "tail")
+			);
+			test->should_be<ParsingResult<char>>(
+				"‘digit’ parses ‘1’",
+				digit()("1tail"),
+				make_tuple('1', "tail")
+			);
+			test->should_be<ParsingResult<char>>(
+				"‘digit’ parses ‘9’",
+				digit()("9tail"),
+				make_tuple('9', "tail")
+			);
+			test->should_be<ParsingResult<char>>(
+				"‘digit’ fails to parse if it’s not a digit",
+				simple_parsing_failure(digit())("foo"),
+				ParsingError{"failure"}
+			);
+			test->should_be<ParsingResult<char>>(
+				"‘digit’ fails on empty input",
+				simple_parsing_failure(digit())(""),
+				ParsingError{"failure"}
+			);
+		} // }}}3
+		{ // num_sign {{{3
+			const function<int(function<int(int)>)> apply_num =
+				[](function<int(int)> fn) { return fn(123); };
+			test->should_be<ParsingResult<int>>(
+				"‘num_sign’ parses ‘+’",
+				(apply_num ^ num_sign<int>())("+tail"),
+				make_tuple(123, "tail")
+			);
+			test->should_be<ParsingResult<int>>(
+				"‘num_sign’ parses ‘-’ (negates the value)",
+				(apply_num ^ num_sign<int>())("-tail"),
+				make_tuple(-123, "tail")
+			);
+			test->should_be<ParsingResult<int>>(
+				"‘num_sign’ fails to parse if neither of those signs",
+				simple_parsing_failure(apply_num ^ num_sign<int>())("foo"),
+				ParsingError{"failure"}
+			);
+			test->should_be<ParsingResult<int>>(
+				"‘num_sign’ fails on empty input",
+				simple_parsing_failure(apply_num ^ num_sign<int>())(""),
+				ParsingError{"failure"}
+			);
+		} // }}}3
+	} // }}}2
+	{ // string parsers {{{2
+		{ // parse_string {{{3
+			test->should_be<ParsingResult<string>>(
+				"‘parse_string’ parses specified string",
+				parse_string("foobar")("foobarbaz"),
+				make_tuple("foobar", "baz")
+			);
+			test->should_be<ParsingResult<string>>(
+				"‘parse_string’ fails to parse if string is different",
+				simple_parsing_failure(parse_string("foobar"))("xyzabcdef"),
+				ParsingError{"failure"}
+			);
+			test->should_be<ParsingResult<string>>(
+				"‘parse_string’ fails to parse if not enough input",
+				simple_parsing_failure(parse_string("foobar"))("foo"),
+				ParsingError{"failure"}
+			);
+			test->should_be<ParsingResult<string>>(
+				"‘parse_string’ fails on empty input",
+				simple_parsing_failure(parse_string("foobar"))(""),
+				ParsingError{"failure"}
+			);
+		} // }}}3
+		{ // digits {{{3
+			test->should_be<ParsingResult<string>>(
+				"‘digits’ parses multiple digits",
+				digits()("0123456789foo"),
+				make_tuple("0123456789", "foo")
+			);
+			test->should_be<ParsingResult<string>>(
+				"‘digits’ parses single digit",
+				digits()("1foo"),
+				make_tuple("1", "foo")
+			);
+			test->should_be<ParsingResult<string>>(
+				"‘digits’ fails to parse if there are no digits",
+				simple_parsing_failure(digits())("foo"),
+				ParsingError{"failure"}
+			);
+		} // }}}3
+	} // }}}2
 	{ // unsigned_decimal {{{3
 		const Parser<unsigned int> test_parser = unsigned_decimal();
 		generic_decimal_parser_test("unsigned_decimal", test_parser, test);
 		test->should_be<ParsingResult<unsigned int>>(
 			"‘unsigned_decimal’ fails to parse if a char is not a digit",
-			(map_parsing_failure(
-				const_map(ParsingError{"failed"}),
-				test_parser
-			))("tail"),
-			ParsingError{"failed"}
+			simple_parsing_failure(test_parser)("tail"),
+			ParsingError{"failure"}
 		);
 		test->should_be<ParsingResult<unsigned int>>(
 			"‘unsigned_decimal’ fails to parse signed decimal",
-			(map_parsing_failure(
-				const_map(ParsingError{"failed"}),
-				test_parser
-			))("-1tail"),
-			ParsingError{"failed"}
+			simple_parsing_failure(test_parser)("-1tail"),
+			ParsingError{"failure"}
 		);
 	} // }}}3
 	{ // signed_decimal {{{3
@@ -526,19 +777,13 @@ void test_simple_parsers(shared_ptr<Test> test)
 		generic_decimal_parser_test("signed_decimal", test_parser, test);
 		test->should_be<ParsingResult<int>>(
 			"‘signed_decimal’ fails to parse if a char is not a digit (1)",
-			(map_parsing_failure(
-				const_map(ParsingError{"failed"}),
-				test_parser
-			))("-tail"),
-			ParsingError{"failed"}
+			simple_parsing_failure(test_parser)("-tail"),
+			ParsingError{"failure"}
 		);
 		test->should_be<ParsingResult<int>>(
 			"‘signed_decimal’ fails to parse if a char is not a digit (2)",
-			(map_parsing_failure(
-				const_map(ParsingError{"failed"}),
-				test_parser
-			))("+tail"),
-			ParsingError{"failed"}
+			simple_parsing_failure(test_parser)("+tail"),
+			ParsingError{"failure"}
 		);
 		test->should_be<ParsingResult<int>>(
 			"‘signed_decimal’ parses ‘-1’",
@@ -566,19 +811,75 @@ void test_simple_parsers(shared_ptr<Test> test)
 			make_tuple(-1234567890, "tail")
 		);
 		test->should_be<ParsingResult<int>>(
-			"‘signed_decimal’ fails when number overflows",
-			map_parsing_failure(
-				const_map(ParsingError{"failure"}),
-				test_parser
-			)("99999999999999999999999999999999999999999999999999tail"),
+			"‘signed_decimal’ fails when negative number underflows",
+			simple_parsing_failure(test_parser)(
+				"-99999999999999999999999999999999999999999999999999tail"
+			),
 			ParsingError{"failure"}
 		);
-		test->should_be<ParsingResult<int>>(
-			"‘signed_decimal’ fails when negative number underflows",
-			map_parsing_failure(
-				const_map(ParsingError{"failure"}),
-				test_parser
-			)("-99999999999999999999999999999999999999999999999999tail"),
+	} // }}}3
+	{ // unsigned_fractional {{{3
+		const Parser<double> test_parser = unsigned_fractional();
+		generic_fractional_parser_test(
+			"unsigned_fractional",
+			test_parser,
+			test
+		);
+		test->should_be<ParsingResult<double>>(
+			"‘unsigned_fractional’ fails to parse signed value ‘-123.123’",
+			simple_parsing_failure(test_parser)("-123.123tail"),
+			ParsingError{"failure"}
+		);
+	} // }}}3
+	{ // signed_fractional {{{3
+		const Parser<double> test_parser = signed_fractional();
+		generic_fractional_parser_test("signed_fractional", test_parser, test);
+		test->should_be<ParsingResult<double>>(
+			"‘signed_fractional’ parses signed value ‘-123.123’",
+			test_parser("-123.123tail"),
+			make_tuple(-123.123, "tail")
+		);
+		test->should_be<ParsingResult<double>>(
+			"‘signed_fractional’ parses signed value ‘-123.123’",
+			test_parser("-123.123tail"),
+			make_tuple(-123.123, "tail")
+		);
+		test->should_be<ParsingResult<double>>(
+			"‘signed_fractional’ parses signed value ‘-0.0’",
+			test_parser("-0.0tail"),
+			make_tuple(0.0, "tail")
+		);
+		test->should_be<ParsingResult<double>>(
+			"‘signed_fractional’ parses signed value ‘+0.0’",
+			test_parser("+0.0tail"),
+			make_tuple(0.0, "tail")
+		);
+		test->should_be<ParsingResult<double>>(
+			"‘signed_fractional’ parses signed value ‘-1234567890.0’",
+			test_parser("-1234567890.0tail"),
+			make_tuple(-1234567890.0, "tail")
+		);
+		test->should_be<ParsingResult<double>>(
+			"‘signed_fractional’ fails to parse signed non-fractional ‘-1’ (no dot)",
+			simple_parsing_failure(test_parser)("-1tail"),
+			ParsingError{"failure"}
+		);
+		test->should_be<ParsingResult<double>>(
+			"‘signed_fractional’ fails when negative number underflows",
+			simple_parsing_failure(test_parser)(
+				string("-99999999999999999999999999999999999999999999999999") +
+				string("99999999999999999999999999999999999999999999999999") +
+				string("99999999999999999999999999999999999999999999999999") +
+				string("99999999999999999999999999999999999999999999999999") +
+				string("99999999999999999999999999999999999999999999999999") +
+				string("99999999999999999999999999999999999999999999999999") +
+				string("99999999999999999999999999999999999999999999999999") +
+				string("99999999999999999999999999999999999999999999999999") +
+				string("99999999999999999999999999999999999999999999999999") +
+				string("99999999999999999999999999999999999999999999999999") +
+				string("99999999999999999999999999999999999999999999999999") +
+				string(".9tail")
+			),
 			ParsingError{"failure"}
 		);
 	} // }}}3
@@ -587,12 +888,12 @@ void test_simple_parsers(shared_ptr<Test> test)
 void test_composition_of_simple_parsers(shared_ptr<Test> test)
 {
 	{
-		const function<function<function<string(string)>(char)>(char)> map_fn =
-			[](char a) { return [a](char b) { return [a, b](string c) {
+		const function<string(char, char, string)> map_fn =
+			[](char a, char b, string c) {
 				return char_as_str(a) + char_as_str(b) + "|" + c;
-			}; }; };
+			};
 		const Parser<string> test_parser =
-			map_fn
+			curry(map_fn)
 			^ any_char()
 			^ parse_char('o')
 			^ parse_string("obar")

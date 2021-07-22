@@ -16,6 +16,7 @@ string char_as_str(char c)
 	return s;
 }
 
+// endOfInput :: forall t . Chunk t => Parser t ()
 Parser<Unit> end_of_input()
 {
 	return Parser<Unit>{[](Input input) -> ParsingResult<Unit> {
@@ -26,6 +27,7 @@ Parser<Unit> end_of_input()
 	}};
 }
 
+// anyChar :: Parser Char
 Parser<char> any_char()
 {
 	return Parser<char>{[](Input input) -> ParsingResult<char> {
@@ -36,77 +38,110 @@ Parser<char> any_char()
 	}};
 }
 
+// char :: Char -> Parser Char
 Parser<char> parse_char(char c)
 {
-	return Parser<char>{[=](Input input) -> ParsingResult<char> {
-		auto pfx = [=](string msg){
-			return "parse_char('" + char_as_str(c) + "'): " + msg;
-		};
+	return prefix_parsing_failure(
+		"parse_char('" + char_as_str(c) + "')",
+		Parser<char>{[=](Input input) -> ParsingResult<char> {
+			if (input.empty())
+				return ParsingError{"input is empty"};
+			else if (input[0] != c)
+				return ParsingError{
+					"char is different, got this: '" +
+					char_as_str(input[0]) + "'"
+				};
+			else
+				return make_tuple(input[0], input.substr(1));
+		}}
+	);
+}
 
+// Negative version of ‘parse_char’.
+// notChar :: Char -> Parser Char
+Parser<char> not_char(char c)
+{
+	return satisfy([c](char x) { return x != c; });
+}
+
+// satisfy :: (Char -> Bool) -> Parser Char
+Parser<char> satisfy(function<bool(char)> predicate)
+{
+	return Parser<char>{[predicate](Input input) -> ParsingResult<char> {
 		if (input.empty())
-			return ParsingError{pfx("input is empty")};
-		else if (input[0] != c)
-			return ParsingError{pfx(
-				"char is different, got this: '" + char_as_str(input[0]) + "'"
-			)};
-		else
+			return ParsingError{"satisfy: input is empty"};
+		else if (predicate(input[0]))
 			return make_tuple(input[0], input.substr(1));
+		else
+			return ParsingError{
+				"satisfy: '" + char_as_str(input[0]) +
+				"' does not satisfy predicate"
+			};
 	}};
 }
 
-// Just takes what’s left in the input
-Parser<string> any_string()
+// digit :: Parser Char
+Parser<char> digit()
 {
-	return Parser<string>{[](Input input) { return make_tuple(input, ""); }};
+	return satisfy([](char c) { return c >= '0' && c <= '9'; });
 }
 
+// string :: Text -> Parser Text
 Parser<string> parse_string(string s)
 {
-	return Parser<string>{[=](Input input) -> ParsingResult<string> {
-		auto pfx = [=](string msg){
-			return "parse_string(\"" + s + "\"): " + msg;
+	return prefix_parsing_failure(
+		"parse_string(\"" + s + "\")",
+		Parser<string>{[=](Input input) -> ParsingResult<string> {
+			string taken_string;
+
+			if (input.empty())
+				return ParsingError{"Input is empty"};
+			else if (input.size() < s.size())
+				return ParsingError{
+					"Input is less than string (input is: \"" + input + "\")"
+				};
+			else if ((taken_string = input.substr(0, s.size())) != s)
+				return ParsingError{
+					"String is different, got this: \"" + taken_string + "\""
+				};
+			else
+				return make_tuple(taken_string, input.substr(s.size()));
+		}}
+	);
+}
+
+Parser<string> digits()
+{
+	function<string(vector<char>)> chars_to_string =
+		[](vector<char> list) {
+			string str(list.begin(), list.end());
+			return str;
 		};
-
-		string taken_string;
-
-		if (input.empty())
-			return ParsingError{pfx("input is empty")};
-		else if (input.size() < s.size())
-			return ParsingError{pfx(
-				"input is less than string (input is: \"" + input + "\")"
-			)};
-		else if ((taken_string = input.substr(0, s.size())) != s)
-			return ParsingError{pfx(
-				"string is different, got this: \"" + taken_string + "\""
-			)};
-		else
-			return make_tuple(taken_string, input.substr(s.size()));
-	}};
+	return prefix_parsing_failure("digits", chars_to_string ^ some(digit()));
 }
 
 template <typename T>
 inline Parser<T> generic_decimal_parser(string parser_name)
 {
-	return Parser<T>{[parser_name](Input input) -> ParsingResult<T> {
-		string::size_type i = 0;
-		for (auto &c : input) {
-			if (c < '0' || c > '9') break;
-			++i;
-		}
-		if (i < 1)
-			return ParsingError{
-				parser_name + ": Failed to parse even a single digit"
-			};
-
-		try {
-			return make_tuple(stoi(input.substr(0, i)), input.substr(i));
-		} catch (out_of_range&) {
-			return ParsingError{
-				parser_name + ": Integer value is out of integer bounds: " +
-				input.substr(0, i)
-			};
-		}
-	}};
+	return prefix_parsing_failure(
+		parser_name,
+		Parser<T>{[](Input input) -> ParsingResult<T> {
+			return visit(overloaded {
+				[](ParsingError err) -> ParsingResult <T> { return err; },
+				[](ParsingSuccess<string> x) -> ParsingResult <T> {
+					auto [ digits_str, tail ] = x;
+					try {
+						return make_tuple(stoi(digits_str), tail);
+					} catch (out_of_range&) {
+						return ParsingError{
+							"Integer value is out of integer bounds: " +
+							digits_str
+						};
+					}
+				}
+			}, digits()(input));
+		}}
+	);
 }
 
 Parser<unsigned int> unsigned_decimal()
@@ -116,24 +151,49 @@ Parser<unsigned int> unsigned_decimal()
 
 Parser<int> signed_decimal()
 {
-	using T = int;
-
-	const Parser<function<T(T)>> sign_fn =
-		(function(negative<T>) <= parse_char('-')) ||
-		(function(id<T>)       <= parse_char('+')) ||
-		pure(function(id<T>));
-
-	return sign_fn ^ generic_decimal_parser<T>("signed_decimal");
+	return
+		optional_num_sign<int>()
+		^ generic_decimal_parser<int>("signed_decimal");
 }
 
-// TODO implement
+template <typename T>
+inline Parser<T> generic_fractional_parser(string parser_name)
+{
+	function<string(string, char, string)> concat =
+		[](string a, char b, string c) { return a + char_as_str(b) + c; };
+
+	Parser<string> fractional_number =
+		curry(concat) ^ digits() ^ parse_char('.') ^ digits();
+
+	return prefix_parsing_failure(
+		parser_name,
+		Parser<T>{[fractional_number](Input input) -> ParsingResult<T> {
+			return visit(overloaded {
+				[](ParsingError err) -> ParsingResult<T> { return err; },
+				[](ParsingSuccess<string> x) -> ParsingResult<T> {
+					auto [ number_str, tail ] = x;
+					try {
+						return make_tuple(stod(number_str), tail);
+					} catch (out_of_range&) {
+						return ParsingError{
+							"Fractional value is out of type bounds: " +
+							number_str
+						};
+					}
+				}
+			}, fractional_number(input));
+		}}
+	);
+}
+
 Parser<double> unsigned_fractional()
 {
-	return pure(123.0);
+	return generic_fractional_parser<double>("unsigned_fractional");
 }
 
-// TODO implement
 Parser<double> signed_fractional()
 {
-	return pure(123.0);
+	return
+		optional_num_sign<double>()
+		^ generic_fractional_parser<double>("signed_fractional");
 }

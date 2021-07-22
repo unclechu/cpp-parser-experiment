@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "helpers.hpp"
+#include "parser/helpers.hpp"
 #include "parser/types.hpp"
 
 using namespace std;
@@ -50,7 +51,7 @@ template <typename A>
 // parser must fail at some point to finalize the resulting list.
 Parser<vector<A>> some(Parser<A> parser)
 {
-	return Parser<vector<A>>{[=](Input input) {
+	function<ParsingResult<vector<A>>(Input)> parser_fn = [=](Input input) {
 		return visit(overloaded {
 			[](ParsingError err) -> ParsingResult<vector<A>> { return err; },
 			[parser](ParsingSuccess<A> first) -> ParsingResult<vector<A>> {
@@ -75,7 +76,16 @@ Parser<vector<A>> some(Parser<A> parser)
 				return recur(first_tail);
 			}
 		}, parser(input));
-	}};
+	};
+
+	return map_parsing_failure<vector<A>>(
+		[](ParsingError err) {
+			return ParsingError{
+				"‘some’: failed to parse at least one single element: " + err
+			};
+		},
+		Parser<vector<A>>{parser_fn}
+	);
 }
 
 // }}}1

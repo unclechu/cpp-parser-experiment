@@ -3,6 +3,9 @@
 #include "parser/parsers.hpp"
 #include "parser/applicative.hpp"
 
+using namespace std;
+
+
 // A helper
 string char_as_str(char c)
 {
@@ -78,10 +81,20 @@ Parser<string> parse_string(string s)
 	}};
 }
 
-// TODO implement
 Parser<int> unsigned_decimal()
 {
-	return pure(123);
+	return Parser<int>{[](Input input) -> ParsingResult<int> {
+		string::size_type i = 0;
+		for (auto &c : input) {
+			if (c < '0' || c > '9') break;
+			++i;
+		}
+		if (i < 1)
+			return ParsingError{
+				"unsigned_decimal: Failed to parse even a single digit"
+			};
+		return make_tuple(stoi(input.substr(0, i)), input.substr(i));
+	}};
 }
 
 // TODO implement

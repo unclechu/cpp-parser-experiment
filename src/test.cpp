@@ -99,12 +99,14 @@ public:
 
 class Test;
 void test_basic_boilerplate(shared_ptr<Test> test);
+void test_simple_parsers(shared_ptr<Test> test);
 void test_composition_of_simple_parsers(shared_ptr<Test> test);
 
 int run_test_cases()
 {
 	const shared_ptr<Test> test = make_shared<Test>();
 	test_basic_boilerplate(test);
+	test_simple_parsers(test);
 	test_composition_of_simple_parsers(test);
 	return test->resolve() ? EXIT_SUCCESS : EXIT_FAILURE;
 }
@@ -391,7 +393,7 @@ void test_basic_boilerplate(shared_ptr<Test> test)
 		);
 
 		const Parser<vector<string>> test_failure = map_parsing_failure(
-			[](ParsingError) { return ParsingError{"failed"}; },
+			const_map(ParsingError{"failed"}),
 			some<string>(foobarbaz_parser)
 		);
 		test->should_be<ParsingResult<string>>(
@@ -425,7 +427,7 @@ void test_basic_boilerplate(shared_ptr<Test> test)
 		);
 
 		const Parser<vector<string>> test_failure = map_parsing_failure(
-			[](ParsingError) { return ParsingError{"failed"}; },
+			const_map(ParsingError{"failed"}),
 			many<string>(foobarbaz_parser)
 		);
 		test->should_be<ParsingResult<string>>(
@@ -437,22 +439,68 @@ void test_basic_boilerplate(shared_ptr<Test> test)
 	// }}}3
 }
 
+void test_simple_parsers(shared_ptr<Test> test)
+{
+	{ // unsigned_decimal {{{3
+		const Parser<int> test_parser = unsigned_decimal();
+		test->should_be<ParsingResult<int>>(
+			"‘unsigned_decimal’ parses ‘123’ as an integer",
+			test_parser("123tail"),
+			make_tuple(123, "tail")
+		);
+		test->should_be<ParsingResult<int>>(
+			"‘unsigned_decimal’ parses ‘987’ as an integer",
+			test_parser("987tail"),
+			make_tuple(987, "tail")
+		);
+		test->should_be<ParsingResult<int>>(
+			"‘unsigned_decimal’ parses ‘1’ as an integer",
+			test_parser("1tail"),
+			make_tuple(1, "tail")
+		);
+		test->should_be<ParsingResult<int>>(
+			"‘unsigned_decimal’ parses ‘000123’ as ‘123’ integer",
+			test_parser("000123tail"),
+			make_tuple(123, "tail")
+		);
+		test->should_be<ParsingResult<int>>(
+			"‘unsigned_decimal’ parses ‘0’ as an integer",
+			test_parser("0tail"),
+			make_tuple(0, "tail")
+		);
+		test->should_be<ParsingResult<int>>(
+			"‘unsigned_decimal’ parses ‘000’ as ‘0’ integer",
+			test_parser("000tail"),
+			make_tuple(0, "tail")
+		);
+		test->should_be<ParsingResult<int>>(
+			"‘unsigned_decimal’ fails to parse if a char is not a digit",
+			(map_parsing_failure(
+				const_map(ParsingError{"failed"}),
+				test_parser
+			))("tail"),
+			ParsingError{"failed"}
+		);
+	} // unsigned_decimal }}}3
+}
+
 void test_composition_of_simple_parsers(shared_ptr<Test> test)
 {
 	{
-		const ParsingResult<string> result = (
-			function<function<function<string(string)>(char)>(char)>(
-				[](char a) { return [=](char b) { return [=](string c) {
-					return char_as_str(a) + char_as_str(b) + "|" + c;
-				}; }; }
-			)
-				^ any_char()
-				^ parse_char('o')
-				^ parse_string("obar")
-				<< end_of_input()
-		)("foobar");
-
-		test->should_be<ParsingResult<string>>
-			("‘foobar’ is fully parsed", result, make_tuple("fo|obar", ""));
+		const function<function<function<string(string)>(char)>(char)> map_fn =
+			[](char a) { return [a](char b) { return [a, b](string c) {
+				return char_as_str(a) + char_as_str(b) + "|" + c;
+			}; }; };
+		const Parser<string> test_parser =
+			map_fn
+			^ any_char()
+			^ parse_char('o')
+			^ parse_string("obar")
+			<< end_of_input();
+		test->should_be<ParsingResult<string>>(
+			"‘foobar’ is fully parsed",
+			test_parser("foobar"),
+			make_tuple("fo|obar", "")
+		);
 	}
 }

@@ -23,4 +23,10 @@ Parser<A> map_parsing_failure(
 	}};
 }
 
+template <typename A>
+function<A(A)> const_map(A x)
+{
+	return [=](A) { return x; };
+}
+
 #endif

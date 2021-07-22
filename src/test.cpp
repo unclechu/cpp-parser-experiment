@@ -481,6 +481,14 @@ void test_simple_parsers(shared_ptr<Test> test)
 			))("tail"),
 			ParsingError{"failed"}
 		);
+		test->should_be<ParsingResult<int>>(
+			"‘unsigned_decimal’ fails to parse signed decimal",
+			(map_parsing_failure(
+				const_map(ParsingError{"failed"}),
+				test_parser
+			))("-1tail"),
+			ParsingError{"failed"}
+		);
 	} // unsigned_decimal }}}3
 }
 

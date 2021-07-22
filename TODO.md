@@ -1,8 +1,8 @@
 ## To Do
 
 - Implement parsers for numbers
-    * [ ] unsigned decimal
-    * [ ] signed decimal (reuse unsigned decimal)
+    * [x] unsigned decimal
+    * [x] signed decimal (reuse unsigned decimal)
     * [ ] unsigned fractional (floating point)
     * [ ] signed fractional (reuse unsigned fractional)
 - Implement JSON value parser

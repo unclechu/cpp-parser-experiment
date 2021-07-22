@@ -12,6 +12,7 @@
 #include "parser/alternative.hpp"
 #include "parser/applicative.hpp"
 #include "parser/functor.hpp"
+#include "parser/helpers.hpp"
 #include "parser/monadfail.hpp"
 #include "parser/parsers.hpp"
 #include "parser/resolvers.hpp"
@@ -386,6 +387,16 @@ void test_basic_boilerplate(shared_ptr<Test> test)
 			"‘some’ parses ‘(bar)’ as 1 element",
 			(debug_list_of_strings ^ test_1_elem)("(bar)tail"),
 			make_tuple("1:bar", "tail")
+		);
+
+		const Parser<vector<string>> test_failure = map_parsing_failure(
+			[](ParsingError) { return ParsingError{"failed"}; },
+			some<string>(foobarbaz_parser)
+		);
+		test->should_be<ParsingResult<string>>(
+			"‘some’ ensures that at least one element is parsed",
+			(debug_list_of_strings ^ test_failure)("foobar"),
+			ParsingError{"failed"}
 		);
 	} // }}}4
 	// }}}3

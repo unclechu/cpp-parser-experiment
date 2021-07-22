@@ -14,7 +14,7 @@ Parser<char> any_char();
 Parser<char> parse_char(char c);
 Parser<string> any_string();
 Parser<string> parse_string(string s);
-Parser<int> unsigned_decimal();
+Parser<unsigned int> unsigned_decimal();
 Parser<int> signed_decimal();
 Parser<double> unsigned_fractional();
 Parser<double> signed_fractional();

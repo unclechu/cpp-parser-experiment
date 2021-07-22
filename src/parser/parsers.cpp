@@ -1,7 +1,10 @@
+#include <functional>
+#include <stdexcept>
 #include <string>
 
-#include "parser/parsers.hpp"
+#include "parser/alternative.hpp"
 #include "parser/applicative.hpp"
+#include "parser/parsers.hpp"
 
 using namespace std;
 
@@ -81,9 +84,10 @@ Parser<string> parse_string(string s)
 	}};
 }
 
-Parser<int> unsigned_decimal()
+template <typename T>
+inline Parser<T> generic_decimal_parser(string parser_name)
 {
-	return Parser<int>{[](Input input) -> ParsingResult<int> {
+	return Parser<T>{[parser_name](Input input) -> ParsingResult<T> {
 		string::size_type i = 0;
 		for (auto &c : input) {
 			if (c < '0' || c > '9') break;
@@ -91,16 +95,35 @@ Parser<int> unsigned_decimal()
 		}
 		if (i < 1)
 			return ParsingError{
-				"unsigned_decimal: Failed to parse even a single digit"
+				parser_name + ": Failed to parse even a single digit"
 			};
-		return make_tuple(stoi(input.substr(0, i)), input.substr(i));
+
+		try {
+			return make_tuple(stoi(input.substr(0, i)), input.substr(i));
+		} catch (out_of_range&) {
+			return ParsingError{
+				parser_name + ": Integer value is out of integer bounds: " +
+				input.substr(0, i)
+			};
+		}
 	}};
 }
 
-// TODO implement
+Parser<unsigned int> unsigned_decimal()
+{
+	return generic_decimal_parser<unsigned int>("unsigned_decimal");
+}
+
 Parser<int> signed_decimal()
 {
-	return pure(123);
+	using T = int;
+
+	const Parser<function<T(T)>> sign_fn =
+		(function(negative<T>) <= parse_char('-')) ||
+		(function(id<T>)       <= parse_char('+')) ||
+		pure(function(id<T>));
+
+	return sign_fn ^ generic_decimal_parser<T>("signed_decimal");
 }
 
 // TODO implement

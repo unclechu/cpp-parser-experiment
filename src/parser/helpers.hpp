@@ -9,6 +9,9 @@
 #include "../helpers.hpp"
 #include "parser/types.hpp"
 
+using namespace std;
+
+
 template<typename A>
 Parser<A> map_parsing_failure(
 	function<ParsingError(ParsingError)> map_fn,

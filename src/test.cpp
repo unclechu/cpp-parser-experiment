@@ -460,41 +460,51 @@ void test_basic_boilerplate(shared_ptr<Test> test)
 	// }}}3
 }
 
+template <typename T>
+void generic_decimal_parser_test(
+	string fn_name,
+	Parser<T> test_parser,
+	shared_ptr<Test> test
+)
+{
+	test->should_be<ParsingResult<T>>(
+		"‘" + fn_name + "’ parses ‘123’ as an integer",
+		test_parser("123tail"),
+		make_tuple(123, "tail")
+	);
+	test->should_be<ParsingResult<T>>(
+		"‘" + fn_name + "’ parses ‘987’ as an integer",
+		test_parser("987tail"),
+		make_tuple(987, "tail")
+	);
+	test->should_be<ParsingResult<T>>(
+		"‘" + fn_name + "’ parses ‘1’ as an integer",
+		test_parser("1tail"),
+		make_tuple(1, "tail")
+	);
+	test->should_be<ParsingResult<T>>(
+		"‘" + fn_name + "’ parses ‘000123’ as ‘123’ integer",
+		test_parser("000123tail"),
+		make_tuple(123, "tail")
+	);
+	test->should_be<ParsingResult<T>>(
+		"‘" + fn_name + "’ parses ‘0’ as an integer",
+		test_parser("0tail"),
+		make_tuple(0, "tail")
+	);
+	test->should_be<ParsingResult<T>>(
+		"‘" + fn_name + "’ parses ‘000’ as ‘0’ integer",
+		test_parser("000tail"),
+		make_tuple(0, "tail")
+	);
+}
+
 void test_simple_parsers(shared_ptr<Test> test)
 {
 	{ // unsigned_decimal {{{3
-		const Parser<int> test_parser = unsigned_decimal();
-		test->should_be<ParsingResult<int>>(
-			"‘unsigned_decimal’ parses ‘123’ as an integer",
-			test_parser("123tail"),
-			make_tuple(123, "tail")
-		);
-		test->should_be<ParsingResult<int>>(
-			"‘unsigned_decimal’ parses ‘987’ as an integer",
-			test_parser("987tail"),
-			make_tuple(987, "tail")
-		);
-		test->should_be<ParsingResult<int>>(
-			"‘unsigned_decimal’ parses ‘1’ as an integer",
-			test_parser("1tail"),
-			make_tuple(1, "tail")
-		);
-		test->should_be<ParsingResult<int>>(
-			"‘unsigned_decimal’ parses ‘000123’ as ‘123’ integer",
-			test_parser("000123tail"),
-			make_tuple(123, "tail")
-		);
-		test->should_be<ParsingResult<int>>(
-			"‘unsigned_decimal’ parses ‘0’ as an integer",
-			test_parser("0tail"),
-			make_tuple(0, "tail")
-		);
-		test->should_be<ParsingResult<int>>(
-			"‘unsigned_decimal’ parses ‘000’ as ‘0’ integer",
-			test_parser("000tail"),
-			make_tuple(0, "tail")
-		);
-		test->should_be<ParsingResult<int>>(
+		const Parser<unsigned int> test_parser = unsigned_decimal();
+		generic_decimal_parser_test("unsigned_decimal", test_parser, test);
+		test->should_be<ParsingResult<unsigned int>>(
 			"‘unsigned_decimal’ fails to parse if a char is not a digit",
 			(map_parsing_failure(
 				const_map(ParsingError{"failed"}),
@@ -502,7 +512,7 @@ void test_simple_parsers(shared_ptr<Test> test)
 			))("tail"),
 			ParsingError{"failed"}
 		);
-		test->should_be<ParsingResult<int>>(
+		test->should_be<ParsingResult<unsigned int>>(
 			"‘unsigned_decimal’ fails to parse signed decimal",
 			(map_parsing_failure(
 				const_map(ParsingError{"failed"}),
@@ -510,7 +520,68 @@ void test_simple_parsers(shared_ptr<Test> test)
 			))("-1tail"),
 			ParsingError{"failed"}
 		);
-	} // unsigned_decimal }}}3
+	} // }}}3
+	{ // signed_decimal {{{3
+		const Parser<int> test_parser = signed_decimal();
+		generic_decimal_parser_test("signed_decimal", test_parser, test);
+		test->should_be<ParsingResult<int>>(
+			"‘signed_decimal’ fails to parse if a char is not a digit (1)",
+			(map_parsing_failure(
+				const_map(ParsingError{"failed"}),
+				test_parser
+			))("-tail"),
+			ParsingError{"failed"}
+		);
+		test->should_be<ParsingResult<int>>(
+			"‘signed_decimal’ fails to parse if a char is not a digit (2)",
+			(map_parsing_failure(
+				const_map(ParsingError{"failed"}),
+				test_parser
+			))("+tail"),
+			ParsingError{"failed"}
+		);
+		test->should_be<ParsingResult<int>>(
+			"‘signed_decimal’ parses ‘-1’",
+			test_parser("-1tail"),
+			make_tuple(-1, "tail")
+		);
+		test->should_be<ParsingResult<int>>(
+			"‘signed_decimal’ parses ‘+1’",
+			test_parser("+1tail"),
+			make_tuple(1, "tail")
+		);
+		test->should_be<ParsingResult<int>>(
+			"‘signed_decimal’ parses ‘-0’",
+			test_parser("-0tail"),
+			make_tuple(0, "tail")
+		);
+		test->should_be<ParsingResult<int>>(
+			"‘signed_decimal’ parses ‘+0’",
+			test_parser("+0tail"),
+			make_tuple(0, "tail")
+		);
+		test->should_be<ParsingResult<int>>(
+			"‘signed_decimal’ parses ‘-1234567890’",
+			test_parser("-1234567890tail"),
+			make_tuple(-1234567890, "tail")
+		);
+		test->should_be<ParsingResult<int>>(
+			"‘signed_decimal’ fails when number overflows",
+			map_parsing_failure(
+				const_map(ParsingError{"failure"}),
+				test_parser
+			)("99999999999999999999999999999999999999999999999999tail"),
+			ParsingError{"failure"}
+		);
+		test->should_be<ParsingResult<int>>(
+			"‘signed_decimal’ fails when negative number underflows",
+			map_parsing_failure(
+				const_map(ParsingError{"failure"}),
+				test_parser
+			)("-99999999999999999999999999999999999999999999999999tail"),
+			ParsingError{"failure"}
+		);
+	} // }}}3
 }
 
 void test_composition_of_simple_parsers(shared_ptr<Test> test)

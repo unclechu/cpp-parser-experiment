@@ -13,15 +13,27 @@ template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
 template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
 template <typename A>
-std::function<A(A)> const_map(A x)
+inline std::function<A(A)> const_map(A x)
 {
 	return [=](A) { return x; };
 }
 
 template <typename A>
-std::optional<A> to_optional(A x)
+inline std::optional<A> to_optional(A x)
 {
 	return x;
 };
+
+template <typename A>
+inline A id(A x)
+{
+	return x;
+}
+
+template <typename A>
+inline A negative(A x)
+{
+	return -x;
+}
 
 #endif

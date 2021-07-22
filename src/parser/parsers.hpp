@@ -1,9 +1,9 @@
 #ifndef _PARSER_PARSERS_HPP_
 #define _PARSER_PARSERS_HPP_
 
-#include <string>
-
 // Building blocks for writing more complex parsers
+
+#include <string>
 
 #include "helpers.hpp"
 #include "parser/types.hpp"

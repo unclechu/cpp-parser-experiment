@@ -4,7 +4,9 @@
 // Alternative implementation (mimicking Alternative type class from Haskell)
 //
 // Definitions in relation to Haskell (Haskell version on the left):
-//   fail → fail_parser (“fail” is occupied by STL)
+//   <|>  → ||
+//   some → some
+//   many → many
 
 #include <functional>
 #include <variant>

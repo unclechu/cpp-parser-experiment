@@ -349,23 +349,24 @@ void test_basic_boilerplate(shared_ptr<Test> test)
 			make_tuple(30, "foo")
 		);
 	} // }}}4
+
+	function<string(vector<string>)> debug_list_of_strings =
+		[](vector<string> list) -> string {
+			if (list.empty()) return "0:list_is_empty";
+			ostringstream out;
+			out << list.size() << ":";
+			ostream_iterator<string> out_iterator (out, ",");
+			copy(list.begin(), list.end()-1, out_iterator);
+			out << list.back(); // last element without separator
+			return out.str();
+		};
+
+	const Parser<string> foobarbaz_parser =
+		parse_char('(')
+		>> (parse_string("foo") || parse_string("bar") || parse_string("baz"))
+		<< parse_char (')');
+
 	{ // “some” {{{4
-		function<string(vector<string>)> debug_list_of_strings =
-			[](vector<string> list) -> string {
-				if (list.empty()) return "0:list_is_empty";
-				ostringstream out;
-				out << list.size() << ":";
-				ostream_iterator<string> out_iterator (out, ",");
-				copy(list.begin(), list.end()-1, out_iterator);
-				out << list.back(); // last element without separator
-				return out.str();
-			};
-
-		const Parser<string> foobarbaz_parser =
-			parse_char('(')
-			>> (parse_string("foo") || parse_string("bar") || parse_string("baz"))
-			<< parse_char (')');
-
 		const Parser<vector<string>> test_3_elems =
 			some<string>(foobarbaz_parser);
 		test->should_be<ParsingResult<string>>(
@@ -397,6 +398,40 @@ void test_basic_boilerplate(shared_ptr<Test> test)
 			"‘some’ ensures that at least one element is parsed",
 			(debug_list_of_strings ^ test_failure)("foobar"),
 			ParsingError{"failed"}
+		);
+	} // }}}4
+	{ // “many” {{{4
+		const Parser<vector<string>> test_3_elems =
+			many<string>(foobarbaz_parser);
+		test->should_be<ParsingResult<string>>(
+			"‘many’ parses ‘(foo)(bar)(baz) as 3 elements’",
+			(debug_list_of_strings ^ test_3_elems)("(foo)(bar)(baz)tail"),
+			make_tuple("3:foo,bar,baz", "tail")
+		);
+
+		const Parser<vector<string>> test_3_elems_in_reverse =
+			many<string>(foobarbaz_parser);
+		test->should_be<ParsingResult<string>>(
+			"‘many’ parses ‘(baz)(bar)(foo)’ as 3 elements",
+			(debug_list_of_strings ^ test_3_elems_in_reverse)("(baz)(bar)(foo)tail"),
+			make_tuple("3:baz,bar,foo", "tail")
+		);
+
+		const Parser<vector<string>> test_1_elem = many<string>(foobarbaz_parser);
+		test->should_be<ParsingResult<string>>(
+			"‘many’ parses ‘(bar)’ as 1 element",
+			(debug_list_of_strings ^ test_1_elem)("(bar)tail"),
+			make_tuple("1:bar", "tail")
+		);
+
+		const Parser<vector<string>> test_failure = map_parsing_failure(
+			[](ParsingError) { return ParsingError{"failed"}; },
+			many<string>(foobarbaz_parser)
+		);
+		test->should_be<ParsingResult<string>>(
+			"‘many’ is okay with parsing nothing (empty list)",
+			(debug_list_of_strings ^ test_failure)("foobar"),
+			make_tuple("0:list_is_empty", "foobar")
 		);
 	} // }}}4
 	// }}}3

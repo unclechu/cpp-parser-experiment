@@ -92,7 +92,6 @@ Parser<vector<A>> some(Parser<A> parser)
 
 // many {{{1
 
-// TODO implement
 template <typename A>
 // Zero or more.
 // many :: Alternative f => f a -> f [a]
@@ -103,7 +102,24 @@ template <typename A>
 Parser<vector<A>> many(Parser<A> parser)
 {
 	return Parser<vector<A>>{[=](Input input) {
-		return ;
+		vector<A> list;
+
+		using RecurResult = ParsingSuccess<vector<A>>;
+		using RecurFn = function<RecurResult(Input)>;
+		RecurFn recur = [&recur, &list, parser](Input tail) {
+			return visit(overloaded {
+				[&list, tail](ParsingError) -> RecurResult {
+					return make_tuple(list, tail);
+				},
+				[&list, &recur](ParsingSuccess<A> current) -> RecurResult {
+					auto [ current_element, current_tail ] = current;
+					list.push_back(current_element);
+					return recur(current_tail);
+				}
+			}, parser(tail));
+		};
+
+		return recur(input);
 	}};
 }
 

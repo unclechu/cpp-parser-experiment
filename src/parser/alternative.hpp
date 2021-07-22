@@ -4,15 +4,19 @@
 // Alternative implementation (mimicking Alternative type class from Haskell)
 //
 // Definitions in relation to Haskell (Haskell version on the left):
-//   <|>  → ||
-//   some → some
-//   many → many
+//   <|>      → ||
+//   some     → some
+//   many     → many
+//   optional → optional_parser (“optional” is already taken by STL)
 
 #include <functional>
+#include <optional>
 #include <variant>
 #include <vector>
 
 #include "helpers.hpp"
+#include "parser/applicative.hpp"
+#include "parser/functor.hpp"
 #include "parser/helpers.hpp"
 #include "parser/types.hpp"
 
@@ -123,6 +127,17 @@ Parser<vector<A>> many(Parser<A> parser)
 
 		return recur(input);
 	}};
+}
+
+// }}}1
+
+// optional_parser {{{1
+
+template<typename A>
+// optional :: Alternative f => f a -> f (Maybe a)
+Parser<optional<A>> optional_parser(Parser<A> parser)
+{
+	return (function(to_optional<A>) ^ parser) || pure<optional<A>>(nullopt);
 }
 
 // }}}1

@@ -4,6 +4,7 @@
 // Some helpers for parsers
 
 #include <functional>
+#include <optional>
 #include <variant>
 
 #include "../helpers.hpp"
@@ -28,5 +29,11 @@ function<A(A)> const_map(A x)
 {
 	return [=](A) { return x; };
 }
+
+template <typename A>
+optional<A> to_optional(A x)
+{
+	return x;
+};
 
 #endif

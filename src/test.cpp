@@ -3,6 +3,7 @@
 #include <iostream>
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <variant>
@@ -23,6 +24,12 @@ using namespace std;
 
 
 // Testing helpers {{{1
+
+template <typename T>
+ostream& operator<<(ostream &out, optional<T> &x)
+{
+	return x.has_value() ? out << x.value() : out << "nullopt";
+}
 
 template <typename T>
 ostream& operator<<(ostream &out, ParsingResult<T> &x)
@@ -434,6 +441,20 @@ void test_basic_boilerplate(shared_ptr<Test> test)
 			"‘many’ is okay with parsing nothing (empty list)",
 			(debug_list_of_strings ^ test_failure)("foobar"),
 			make_tuple("0:list_is_empty", "foobar")
+		);
+	} // }}}4
+	{ // “optional_parser” {{{4
+		const Parser<optional<char>> test_optional_x =
+			optional_parser(parse_char('x'));
+		test->should_be<ParsingResult<optional<char>>>(
+			"‘optional_parser’ of ‘x’ char parses the char",
+			test_optional_x("xyz"),
+			make_tuple('x', "yz")
+		);
+		test->should_be<ParsingResult<optional<char>>>(
+			"‘optional_parser’ of ‘x’ resolves to ‘nullopt’",
+			test_optional_x("foo"),
+			make_tuple(nullopt, "foo")
 		);
 	} // }}}4
 	// }}}3

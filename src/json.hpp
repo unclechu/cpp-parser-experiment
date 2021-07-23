@@ -9,6 +9,7 @@
 #include <variant>
 
 #include "helpers.hpp"
+#include "parser/types.hpp"
 
 using namespace std;
 
@@ -31,5 +32,10 @@ struct JsonValue: variant<
 	JsonBool,
 	JsonNull
 > {};
+
+
+// Parsers
+Parser<JsonNull> json_null();
+Parser<JsonBool> json_bool();
 
 #endif

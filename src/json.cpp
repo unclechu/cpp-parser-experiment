@@ -1,10 +1,10 @@
 #include <functional>
-#include <list>
 #include <map>
 #include <memory>
 #include <string>
 #include <tuple>
 #include <variant>
+#include <vector>
 
 #include "abstractions/alternative.hpp"
 #include "abstractions/applicative.hpp"
@@ -50,6 +50,27 @@ Parser<JsonNumber> json_number()
 		"JsonNumber",
 		(function(to_json_number<double>) ^ signed_fractional()) ||
 		(function(to_json_number<int>) ^ signed_decimal())
+	);
+}
+
+// WARNING! This implementation is incomplete. For instance escaped unicode
+// characters are not supported (e.g. “\uD83D\uDE10”).
+// You can find more details here: https://www.ietf.org/rfc/rfc4627.txt
+Parser<JsonString> json_string()
+{
+	function<bool(char)> non_quote_char = [](char x) { return x != '"'; };
+	function<JsonString(string)> to_json_string = [](string x) {
+		return JsonString{make_tuple(x)};
+	};
+	return prefix_parsing_failure(
+		"JsonString",
+		to_json_string
+		^ (
+			function(chars_to_string<vector>)
+			^ char_('"')
+			>> some(('"' <= string_("\\\"")) || satisfy(non_quote_char))
+			<< char_('"')
+		)
 	);
 }
 

@@ -1,12 +1,12 @@
 #ifndef _JSON_HPP_
 #define _JSON_HPP_
 
-#include <list>
 #include <map>
 #include <memory>
 #include <string>
 #include <tuple>
 #include <variant>
+#include <vector>
 
 #include "helpers.hpp"
 #include "parser/types.hpp"
@@ -18,7 +18,7 @@ struct JsonValue; // Algebraic data type
 
 // Constructors-ish
 struct JsonObject: tuple<map<string, JsonValue>> {};
-struct JsonArray: tuple<list<JsonValue>> {};
+struct JsonArray: tuple<vector<JsonValue>> {};
 struct JsonString: tuple<string> {};
 struct JsonNumber: tuple<variant<int, double>> {};
 struct JsonBool: tuple<bool> {};
@@ -37,5 +37,7 @@ struct JsonValue: variant<
 // Parsers
 Parser<JsonNull> json_null();
 Parser<JsonBool> json_bool();
+Parser<JsonNumber> json_number();
+Parser<JsonString> json_string();
 
 #endif

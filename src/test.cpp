@@ -377,9 +377,9 @@ void test_basic_boilerplate(shared_ptr<Test> test)
 		};
 
 	const Parser<string> foobarbaz_parser =
-		parse_char('(')
-		>> (parse_string("foo") || parse_string("bar") || parse_string("baz"))
-		<< parse_char (')');
+		char_('(')
+		>> (string_("foo") || string_("bar") || string_("baz"))
+		<< char_ (')');
 
 	{ // “some” {{{4
 		const Parser<vector<string>> test_3_elems =
@@ -447,7 +447,7 @@ void test_basic_boilerplate(shared_ptr<Test> test)
 	} // }}}4
 	{ // “optional_parser” {{{4
 		const Parser<optional<char>> test_optional_x =
-			optional_parser(parse_char('x'));
+			optional_parser(char_('x'));
 		test->should_be<ParsingResult<optional<char>>>(
 			"‘optional_parser’ of ‘x’ char parses the char",
 			test_optional_x("xyz"),
@@ -611,20 +611,20 @@ void test_simple_parsers(shared_ptr<Test> test)
 				ParsingError{"failure"}
 			);
 		} // }}}3
-		{ // parse_char {{{3
+		{ // char_ {{{3
 			test->should_be<ParsingResult<char>>(
-				"‘parse_char’ parses specified char",
-				parse_char('f')("foo"),
+				"‘char_’ parses specified char",
+				char_('f')("foo"),
 				make_tuple('f', "oo")
 			);
 			test->should_be<ParsingResult<char>>(
-				"‘parse_char’ fails to parse if char is different",
-				simple_parsing_failure(parse_char('f'))("bar"),
+				"‘char_’ fails to parse if char is different",
+				simple_parsing_failure(char_('f'))("bar"),
 				ParsingError{"failure"}
 			);
 			test->should_be<ParsingResult<char>>(
-				"‘parse_char’ fails on empty input",
-				simple_parsing_failure(parse_char('f'))(""),
+				"‘char_’ fails on empty input",
+				simple_parsing_failure(char_('f'))(""),
 				ParsingError{"failure"}
 			);
 		} // }}}3
@@ -718,25 +718,25 @@ void test_simple_parsers(shared_ptr<Test> test)
 		} // }}}3
 	} // }}}2
 	{ // string parsers {{{2
-		{ // parse_string {{{3
+		{ // string_ {{{3
 			test->should_be<ParsingResult<string>>(
-				"‘parse_string’ parses specified string",
-				parse_string("foobar")("foobarbaz"),
+				"‘string_’ parses specified string",
+				string_("foobar")("foobarbaz"),
 				make_tuple("foobar", "baz")
 			);
 			test->should_be<ParsingResult<string>>(
-				"‘parse_string’ fails to parse if string is different",
-				simple_parsing_failure(parse_string("foobar"))("xyzabcdef"),
+				"‘string_’ fails to parse if string is different",
+				simple_parsing_failure(string_("foobar"))("xyzabcdef"),
 				ParsingError{"failure"}
 			);
 			test->should_be<ParsingResult<string>>(
-				"‘parse_string’ fails to parse if not enough input",
-				simple_parsing_failure(parse_string("foobar"))("foo"),
+				"‘string_’ fails to parse if not enough input",
+				simple_parsing_failure(string_("foobar"))("foo"),
 				ParsingError{"failure"}
 			);
 			test->should_be<ParsingResult<string>>(
-				"‘parse_string’ fails on empty input",
-				simple_parsing_failure(parse_string("foobar"))(""),
+				"‘string_’ fails on empty input",
+				simple_parsing_failure(string_("foobar"))(""),
 				ParsingError{"failure"}
 			);
 		} // }}}3
@@ -895,8 +895,8 @@ void test_composition_of_simple_parsers(shared_ptr<Test> test)
 		const Parser<string> test_parser =
 			curry(map_fn)
 			^ any_char()
-			^ parse_char('o')
-			^ parse_string("obar")
+			^ char_('o')
+			^ string_("obar")
 			<< end_of_input();
 		test->should_be<ParsingResult<string>>(
 			"‘foobar’ is fully parsed",

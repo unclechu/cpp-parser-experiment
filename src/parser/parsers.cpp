@@ -40,10 +40,10 @@ Parser<char> any_char()
 }
 
 // char :: Char -> Parser Char
-Parser<char> parse_char(char c)
+Parser<char> char_(char c)
 {
 	return prefix_parsing_failure(
-		"parse_char('" + char_as_str(c) + "')",
+		"char_('" + char_as_str(c) + "')",
 		Parser<char>{[=](Input input) -> ParsingResult<char> {
 			if (input.empty())
 				return ParsingError{"input is empty"};
@@ -58,7 +58,7 @@ Parser<char> parse_char(char c)
 	);
 }
 
-// Negative version of ‘parse_char’.
+// Negative version of ‘char_’.
 // notChar :: Char -> Parser Char
 Parser<char> not_char(char c)
 {
@@ -88,10 +88,10 @@ Parser<char> digit()
 }
 
 // string :: Text -> Parser Text
-Parser<string> parse_string(string s)
+Parser<string> string_(string s)
 {
 	return prefix_parsing_failure(
-		"parse_string(\"" + s + "\")",
+		"string_(\"" + s + "\")",
 		Parser<string>{[=](Input input) -> ParsingResult<string> {
 			string taken_string;
 
@@ -162,7 +162,7 @@ inline Parser<T> generic_fractional_parser(string parser_name)
 		[](string a, char b, string c) { return a + char_as_str(b) + c; };
 
 	Parser<string> fractional_number =
-		curry(concat) ^ digits() ^ parse_char('.') ^ digits();
+		curry(concat) ^ digits() ^ char_('.') ^ digits();
 
 	return prefix_parsing_failure(
 		parser_name,

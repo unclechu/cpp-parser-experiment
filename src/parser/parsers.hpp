@@ -12,7 +12,7 @@
 std::string char_as_str(char c);
 Parser<Unit> end_of_input();
 Parser<char> any_char();
-Parser<char> parse_char(char c);
+Parser<char> char_(char c);
 Parser<char> not_char(char c);
 Parser<char> satisfy(function<bool(char)>);
 Parser<char> digit();
@@ -22,8 +22,8 @@ template <typename N>
 Parser<function<N(N)>> num_sign()
 {
 	return
-		(function(negative<N>) <= parse_char('-')) ||
-		(function(id<N>)       <= parse_char('+'));
+		(function(negative<N>) <= char_('-')) ||
+		(function(id<N>)       <= char_('+'));
 }
 
 template <typename N>
@@ -32,7 +32,7 @@ Parser<function<N(N)>> optional_num_sign()
 	return num_sign<N>() || pure(function(id<N>));
 }
 
-Parser<string> parse_string(string s);
+Parser<string> string_(string s);
 Parser<string> digits();
 Parser<unsigned int> unsigned_decimal();
 Parser<int> signed_decimal();

@@ -24,7 +24,7 @@ Parser<JsonNull> json_null()
 {
 	return prefix_parsing_failure(
 		"json_null",
-		parse_string("null") >= JsonNull{unit()}
+		string_("null") >= JsonNull{unit()}
 	);
 }
 
@@ -35,7 +35,7 @@ Parser<JsonBool> json_bool()
 	};
 	return prefix_parsing_failure(
 		"json_bool",
-		fn ^ (parse_string("true") >= true || parse_string("false") >= false)
+		fn ^ (string_("true") >= true || string_("false") >= false)
 	);
 }
 

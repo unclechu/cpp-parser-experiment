@@ -53,61 +53,66 @@ Parser<JsonNumber> json_number()
 	);
 }
 
+JsonString make_json_string(string x)
+{
+	return JsonString{make_tuple(x)};
+};
+
 // WARNING! This implementation is incomplete. For instance escaped unicode
 // characters are not supported (e.g. “\uD83D\uDE10”).
 // You can find more details here: https://www.ietf.org/rfc/rfc4627.txt
 Parser<JsonString> json_string()
 {
-	function<bool(char)> non_quote_char = [](char x) { return x != '"'; };
-	function<JsonString(string)> to_json_string = [](string x) {
-		return JsonString{make_tuple(x)};
-	};
+	Parser<char> escaped_quote = '"' <= string_("\\\"");
+	Parser<char> non_quote_char = satisfy([](char x) { return x != '"'; });
 	return prefix_parsing_failure(
 		"JsonString",
-		to_json_string
-		^ (
-			function(chars_to_string<vector>)
-			^ char_('"')
-			>> some(('"' <= string_("\\\"")) || satisfy(non_quote_char))
-			<< char_('"')
-		)
+		(function(make_json_string) < function(chars_to_string<vector>))
+		^ char_('"') >> some(escaped_quote || non_quote_char) << char_('"')
 	);
 }
 
 Parser<string> spacer()
 {
-	function<bool(char)> is_spacer = [](char c) {
+	Parser<char> spacer_char = satisfy([](char c) {
 		return c == ' ' || c == '\t' || c == '\n' || c == '\r';
-	};
-	return function(chars_to_string<vector>) ^ some(satisfy(is_spacer));
+	});
+	return function(chars_to_string<vector>) ^ some(spacer_char);
 }
 
 Parser<JsonArray> json_array()
 {
-	// TODO implement
+	/*return prefix_parsing_failure(
+		"JsonArray"
+	);*/
 }
 
 Parser<JsonObject> json_object()
 {
-	// TODO implement
+	/*return prefix_parsing_failure(
+		"JsonObject"
+	);*/
 }
 
 template <typename T>
-inline JsonValue to_json_value(T x)
+inline JsonValue make_json_value(T x)
 {
 	return JsonValue{x};
 }
 
 Parser<JsonValue> json_value()
 {
-	return many(spacer()) >> (
-		(function(to_json_value<JsonNull>) ^ json_null())
-		|| (function(to_json_value<JsonBool>) ^ json_bool())
-		|| (function(to_json_value<JsonNumber>) ^ json_number())
-		|| (function(to_json_value<JsonString>) ^ json_string())
-		|| (function(to_json_value<JsonArray>) ^ json_array())
-		|| (function(to_json_value<JsonObject>) ^ json_object())
-	) << many(spacer());
+	return prefix_parsing_failure(
+		"JsonValue",
+		many(spacer()) >> (
+			(function(make_json_value<JsonNull>) ^ json_null())
+			|| (function(make_json_value<JsonBool>) ^ json_bool())
+			|| (function(make_json_value<JsonNumber>) ^ json_number())
+			|| (function(make_json_value<JsonString>) ^ json_string())
+			|| (function(make_json_value<JsonArray>) ^ json_array())
+			|| (function(make_json_value<JsonObject>) ^ json_object())
+		) << many(spacer())
+	);
 }
 
 // }}}1

@@ -88,4 +88,24 @@ function<function<function<function<E(D)>(C)>(B)>(A)> curry(
 
 // }}}1
 
+
+// compose {{{1
+
+template <typename A, typename B, typename C>
+// (<<<) :: Category cat => cat b c -> cat a b -> cat a c
+// Data.Function (.) :: (b -> c) -> (a -> b) -> a -> c
+inline function<C(A)> compose(function<C(B)> f, function<B(A)> g)
+{
+	return [f,g](A a) -> C { return f(g(a)); };
+}
+
+template <typename A, typename B, typename C>
+// Operator equivalent for “compose” function
+inline function<C(A)> operator<(function<C(B)> f, function<B(A)> g)
+{
+	return compose<A, B, C>(f, g);
+}
+
+// }}}1
+
 #endif

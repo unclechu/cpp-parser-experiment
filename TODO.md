@@ -5,9 +5,9 @@
     * [ ] Object parser
     * [ ] Array parser
     * [ ] String parser
-    * [ ] Number parser (either decimal or fractional)
-    * [ ] Boolean parser
-    * [ ] Null parser
+    * [x] Number parser (either decimal or fractional)
+    * [x] Boolean parser
+    * [x] Null parser
 - Pretty-printer for JSON
 - Nix: Add build option for using clang instead of gcc
 - Implement parsing some structure from “JsonValue”

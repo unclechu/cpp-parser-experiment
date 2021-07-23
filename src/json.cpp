@@ -22,7 +22,7 @@ using namespace std;
 Parser<JsonNull> json_null()
 {
 	return prefix_parsing_failure(
-		"json_null",
+		"JsonNull",
 		string_("null") >= JsonNull{unit()}
 	);
 }
@@ -33,8 +33,23 @@ Parser<JsonBool> json_bool()
 		return JsonBool{make_tuple(x)};
 	};
 	return prefix_parsing_failure(
-		"json_bool",
+		"JsonBool",
 		fn ^ (string_("true") >= true || string_("false") >= false)
+	);
+}
+
+template <typename T>
+inline JsonNumber to_json_number(T x)
+{
+	return JsonNumber{make_tuple(x)};
+}
+
+Parser<JsonNumber> json_number()
+{
+	return prefix_parsing_failure(
+		"JsonNumber",
+		(function(to_json_number<double>) ^ signed_fractional()) ||
+		(function(to_json_number<int>) ^ signed_decimal())
 	);
 }
 

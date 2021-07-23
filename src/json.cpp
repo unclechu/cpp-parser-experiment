@@ -77,14 +77,33 @@ Parser<string> spacer()
 	Parser<char> spacer_char = satisfy([](char c) {
 		return c == ' ' || c == '\t' || c == '\n' || c == '\r';
 	});
-	return function(chars_to_string<vector>) ^ some(spacer_char);
+	return function(chars_to_string<vector>) ^ many(spacer_char);
+}
+
+inline JsonArray make_json_array(vector<JsonValue> x)
+{
+	return JsonArray{make_tuple(x)};
+}
+
+template <typename T>
+// Resolved to empty list by default
+Parser<vector<T>> optional_list(Parser<vector<T>> parser)
+{
+	vector<T> empty_list;
+	return parser || pure<decltype(empty_list)>(empty_list);
 }
 
 Parser<JsonArray> json_array()
 {
-	/*return prefix_parsing_failure(
-		"JsonArray"
-	);*/
+	Parser<char> separator = spacer() >> char_(',') << spacer();
+	using T = vector<JsonValue>;
+	Parser<T> elements = separated_some(json_value(), separator);
+	return prefix_parsing_failure(
+		"JsonArray",
+		char_('[') >> spacer()
+		>> (function(make_json_array) ^ optional_list(elements))
+		<< spacer() << char_(']')
+	);
 }
 
 Parser<JsonObject> json_object()
@@ -104,14 +123,14 @@ Parser<JsonValue> json_value()
 {
 	return prefix_parsing_failure(
 		"JsonValue",
-		many(spacer()) >> (
+		spacer() >> (
 			(function(make_json_value<JsonNull>) ^ json_null())
 			|| (function(make_json_value<JsonBool>) ^ json_bool())
 			|| (function(make_json_value<JsonNumber>) ^ json_number())
 			|| (function(make_json_value<JsonString>) ^ json_string())
 			|| (function(make_json_value<JsonArray>) ^ json_array())
 			|| (function(make_json_value<JsonObject>) ^ json_object())
-		) << many(spacer())
+		) << spacer()
 	);
 }
 

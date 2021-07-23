@@ -69,7 +69,29 @@ F<vector<A>> many(F<A> functor)
 
 // }}}1
 
-// optional_parser {{{1
+// additionals {{{1
+
+template <template<typename>typename F, typename A>
+// Alternative version of “some”.
+// It takes one applicative for the first element (head) of the resulting list
+// and another one for all the other elements (tail) of the list.
+F<vector<A>> one_plus(F<A> head, F<A> tail)
+{
+	function<vector<A>(A, vector<A>)> cons = [](A x, vector<A> xs) {
+		vector list {x};
+		list.insert(list.end(), xs.begin(), xs.end());
+		return list;
+	};
+	return curry(cons) ^ head ^ many(tail);
+}
+
+template <template<typename>typename F, typename A, typename S>
+// Alternative version of “some”.
+// Second applicative is a separator between all elements.
+F<vector<A>> separated_some(F<A> a, F<S> separator)
+{
+	return one_plus<F, A>(a, separator >> a);
+}
 
 template<template<typename>typename F, typename A>
 // optional :: Alternative f => f a -> f (Maybe a)

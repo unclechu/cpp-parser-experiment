@@ -22,6 +22,7 @@ using namespace std;
 // pure {{{1
 
 template <typename A>
+// pure :: Applicative f => a -> f a
 // pure :: Applicative f => a -> Parser a
 Parser<A> pure(A x)
 {
@@ -34,6 +35,7 @@ Parser<A> pure(A x)
 // apply {{{1
 
 template <typename A, typename B>
+// (<*>) :: f (a → b) → f a → f b
 // (<*>) :: Parser (a → b) → Parser a → Parser b
 Parser<B> apply(Parser<function<B(A)>> fn_parser, Parser<A> parser)
 {
@@ -48,11 +50,11 @@ Parser<B> apply(Parser<function<B(A)>> fn_parser, Parser<A> parser)
 	}};
 }
 
-template <typename A, typename B>
+template <template<typename>typename F, typename A, typename B>
 // Operator equivalent for “apply”
-Parser<B> operator^(Parser<function<B(A)>> fn_parser, Parser<A> parser)
+F<B> operator^(F<function<B(A)>> wrapped_fn, F<A> functor)
 {
-	return apply<A, B>(fn_parser, parser);
+	return apply<A, B>(wrapped_fn, functor);
 }
 
 // }}}1
@@ -62,50 +64,50 @@ Parser<B> operator^(Parser<function<B(A)>> fn_parser, Parser<A> parser)
 
 // apply_first {{{2
 
-template <typename A, typename B>
-// (<*) :: Parser a → Parser b → Parser a
-Parser<A> apply_first(Parser<A> parser_a, Parser<B> parser_b)
+template <template<typename>typename F, typename A, typename B>
+// (<*) :: f a → f b → f a
+F<A> apply_first(F<A> functor_a, F<B> functor_b)
 {
-	// (\a _ -> a) <$> parser_a <*> parser_b
+	// (\a _ -> a) <$> functor_a <*> functor_b
 	return apply<B, A>(
 		fmap<A, function<A(B)>>(
 			[](A a) { return [=](B) { return a; }; },
-			parser_a
+			functor_a
 		),
-		parser_b
+		functor_b
 	);
 }
 
-template <typename A, typename B>
+template <template<typename>typename F, typename A, typename B>
 // Operator equivalent for “apply_first”
-Parser<A> operator<<(Parser<A> parser_a, Parser<B> parser_b)
+F<A> operator<<(F<A> functor_a, F<B> functor_b)
 {
-	return apply_first<A, B>(parser_a, parser_b);
+	return apply_first<F, A, B>(functor_a, functor_b);
 }
 
 // }}}2
 
 // apply_second {{{2
 
-template <typename A, typename B>
-// (*>) :: Parser a → Parser b → Parser b
-Parser<B> apply_second(Parser<A> parser_a, Parser<B> parser_b)
+template <template<typename>typename F, typename A, typename B>
+// (*>) :: f a → f b → f b
+F<B> apply_second(F<A> functor_a, F<B> functor_b)
 {
-	// (\_ b -> b) <$> parser_a <*> parser_b
+	// (\_ b -> b) <$> functor_a <*> functor_b
 	return apply<B, B>(
 		fmap<A, function<B(B)>>(
 			[](A) { return [](B b) { return b; }; },
-			parser_a
+			functor_a
 		),
-		parser_b
+		functor_b
 	);
 }
 
-template <typename A, typename B>
+template <template<typename>typename F, typename A, typename B>
 // Operator equivalent for “apply_second”
-Parser<B> operator>>(Parser<A> parser_a, Parser<B> parser_b)
+F<B> operator>>(F<A> functor_a, F<B> functor_b)
 {
-	return apply_second<A, B>(parser_a, parser_b);
+	return apply_second<F, A, B>(functor_a, functor_b);
 }
 
 // }}}2

@@ -206,7 +206,7 @@ void test_basic_boilerplate(shared_ptr<Test> test)
 
 	const Parser<int> test_apply_first = [&](){
 		const Parser<int> test_fn =
-			apply_first<int, string>(test_pure, test_apply);
+			apply_first<Parser, int, string>(test_pure, test_apply);
 		test->should_be<ParsingResult<int>>(
 			"‘apply_first’ (discard right value, keep left one)",
 			test_fn("foo"),
@@ -225,7 +225,7 @@ void test_basic_boilerplate(shared_ptr<Test> test)
 
 	const Parser<string> test_apply_second = [&](){
 		const Parser<string> test_fn =
-			apply_second<int, string>(test_apply_first, test_apply);
+			apply_second<Parser, int, string>(test_apply_first, test_apply);
 		test->should_be<ParsingResult<string>>(
 			"‘apply_second’ (discard left value, keep right one)",
 			test_fn("foo"),

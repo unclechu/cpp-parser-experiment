@@ -14,6 +14,13 @@
     > Like “Data.Aeson.FromJSON” in Haskell but without deriving abilities.
     * [ ] Template “fromJSON”
     * [ ] Implement some data model for the data from example JSON file
+- Add good description of this solution to README
+    * [ ] Motivation
+    * [ ] Explanation for mimicking Haskell type classes
+    * [ ] Basic types for Parser implementation
+    * [ ] Some parsers examples
+    * [ ] Demonstration of parsers composition  in Haskell and showing equivalents-ish in C++
+    * [ ] Demonstrate “curry” helper
 
 ## Done
 

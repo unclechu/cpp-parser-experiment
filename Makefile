@@ -25,6 +25,9 @@ build: $(OBJ)
 run: build
 	'$(BUILD_DIR)/$(TARGET)'
 
+test: build
+	'$(BUILD_DIR)/$(TARGET)' test
+
 install: build
 	cp -- '$(BUILD_DIR)/$(TARGET)' '$(PREFIX)/bin/$(TARGET)'
 

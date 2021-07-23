@@ -1,5 +1,6 @@
 ## To Do
 
+- Read JSON from stdin
 - Implement JSON value parser
     > Combine other atomic-ish JSON parsers together in order to cover any JSON value.
     * [ ] Object parser
@@ -8,12 +9,7 @@
     * [ ] Number parser (either decimal or fractional)
     * [ ] Boolean parser
     * [ ] Null parser
-- Read JSON from stdin
 - Pretty-printer for JSON
-- Parse command-line arguments
-    * [ ] Run some “stupid” tests by “stupid-testing” command
-    * [ ] Pretty-print JSON by “--pretty” option
-    * [ ] Print one-line JSON without any provided options
 - Nix: Add build option for using clang instead of gcc
 - Implement parsing some structure from “JsonValue”
     > Like “Data.Aeson.FromJSON” in Haskell but without deriving abilities.
@@ -38,3 +34,4 @@
     * [x] signed decimal (reuse unsigned decimal)
     * [x] unsigned fractional (floating point)
     * [x] signed fractional (reuse unsigned fractional)
+- Parse command-line arguments

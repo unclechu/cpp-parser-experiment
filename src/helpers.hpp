@@ -45,6 +45,14 @@ inline A negative(A x)
 }
 
 
+template <template<typename>typename T>
+string chars_to_string(T<char> list)
+{
+	string str(list.begin(), list.end());
+	return str;
+}
+
+
 // curry {{{1
 
 template <typename A, typename B>

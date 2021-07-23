@@ -18,6 +18,8 @@
 using namespace std;
 
 
+// Parsers {{{1
+
 Parser<JsonNull> json_null()
 {
 	return prefix_parsing_failure(
@@ -36,3 +38,13 @@ Parser<JsonBool> json_bool()
 		fn ^ (parse_string("true") >= true || parse_string("false") >= false)
 	);
 }
+
+Parser<string> spacer()
+{
+	function<bool(char)> is_spacer = [](char c) {
+		return c == ' ' || c == '\t' || c == '\n' || c == '\r';
+	};
+	return function(chars_to_string<vector>) ^ some(satisfy(is_spacer));
+}
+
+// }}}1

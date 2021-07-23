@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <string>
 
+#include "helpers.hpp"
 #include "parser/alternative.hpp"
 #include "parser/applicative.hpp"
 #include "parser/parsers.hpp"
@@ -112,12 +113,10 @@ Parser<string> parse_string(string s)
 
 Parser<string> digits()
 {
-	function<string(vector<char>)> chars_to_string =
-		[](vector<char> list) {
-			string str(list.begin(), list.end());
-			return str;
-		};
-	return prefix_parsing_failure("digits", chars_to_string ^ some(digit()));
+	return prefix_parsing_failure(
+		"digits",
+		function(chars_to_string<vector>) ^ some(digit())
+	);
 }
 
 template <typename T>

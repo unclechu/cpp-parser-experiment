@@ -4,7 +4,7 @@
 // Functor implementation (mimicking Functor type class from Haskell)
 //
 // Definitions in relation to Haskell (Haskell version on the left):
-//   fmap → fmap_parser (“map” and “fmap” are occupied by STL)
+//   fmap → fmap (“map” and “fmap” are occupied by STL)
 //   <$>  → ^
 //   <&>  → &
 //   <$   → <=
@@ -23,8 +23,9 @@ using namespace std;
 // fmap {{{1
 
 template <typename A, typename B>
+// (<$>) :: (a → b) → f a → f b
 // (<$>) :: (a → b) → Parser a → Parser b
-Parser<B> fmap_parser(function<B(A)> map_fn, Parser<A> parser)
+Parser<B> fmap(function<B(A)> map_fn, Parser<A> parser)
 {
 	return Parser<B>{[=](Input input) {
 		return visit(overloaded {
@@ -37,18 +38,18 @@ Parser<B> fmap_parser(function<B(A)> map_fn, Parser<A> parser)
 	}};
 }
 
-template <typename A, typename B>
-// Operator equivalent for “fmap_parser”
-Parser<B> operator^(function<B(A)> map_fn, Parser<A> parser)
+template <template<typename>typename F, typename A, typename B>
+// Operator equivalent for “fmap”
+F<B> operator^(function<B(A)> map_fn, F<A> functor)
 {
-	return fmap_parser<A, B>(map_fn, parser);
+	return fmap<A, B>(map_fn, functor);
 }
 
-template <typename A, typename B>
+template <template<typename>typename F, typename A, typename B>
 // Flipped version of “fmap” (like (<&>) comparing to (<$>))
-Parser<B> operator&(Parser<A> parser, function<B(A)> map_fn)
+F<B> operator&(F<A> functor, function<B(A)> map_fn)
 {
-	return fmap_parser<A, B>(map_fn, parser);
+	return fmap<A, B>(map_fn, functor);
 }
 
 // }}}1
@@ -58,36 +59,36 @@ Parser<B> operator&(Parser<A> parser, function<B(A)> map_fn)
 
 // void_right {{{2
 
-template <typename A, typename B>
-// (<$) :: a → Parser b → Parser a
-Parser<A> void_right(A to_value, Parser<B> parser)
+template <template<typename>typename F, typename A, typename B>
+// (<$) :: a → f b → f a
+F<A> void_right(A to_value, F<B> functor)
 {
-	return fmap_parser<B, A>([=](B) { return to_value; }, parser);
+	return fmap<B, A>([=](B) { return to_value; }, functor);
 }
 
-template <typename A, typename B>
+template <template<typename>typename F, typename A, typename B>
 // Operator equivalent for “void_right”
-Parser<A> operator<=(A to_value, Parser<B> parser)
+F<A> operator<=(A to_value, F<B> functor)
 {
-	return void_right<A, B>(to_value, parser);
+	return void_right<F, A, B>(to_value, functor);
 }
 
 // }}}2
 
 // void_left {{{2
 
-template <typename A, typename B>
-// ($>) :: Parser a → b → Parser b
-Parser<B> void_left(Parser<A> parser, B to_value)
+template <template<typename>typename F, typename A, typename B>
+// ($>) :: f a → b → f b
+F<B> void_left(F<A> functor, B to_value)
 {
-	return void_right(to_value, parser);
+	return void_right(to_value, functor);
 }
 
-template <typename A, typename B>
+template <template<typename>typename F, typename A, typename B>
 // Operator equivalent for “void_left”
-Parser<B> operator>=(Parser<A> parser, B to_value)
+F<B> operator>=(F<A> functor, B to_value)
 {
-	return void_left<A, B>(parser, to_value);
+	return void_left<F, A, B>(functor, to_value);
 }
 
 // }}}2

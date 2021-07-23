@@ -41,7 +41,7 @@ Parser<B> apply(Parser<function<B(A)>> fn_parser, Parser<A> parser)
 		return visit(overloaded {
 			[=](ParsingSuccess<function<B(A)>> x) -> ParsingResult<B> {
 				auto [ fn, tail ] = x;
-				return fmap_parser<A, B>(fn, parser)(tail);
+				return fmap<A, B>(fn, parser)(tail);
 			},
 			[](ParsingError err) -> ParsingResult<B> { return err; }
 		}, fn_parser(input));
@@ -68,7 +68,7 @@ Parser<A> apply_first(Parser<A> parser_a, Parser<B> parser_b)
 {
 	// (\a _ -> a) <$> parser_a <*> parser_b
 	return apply<B, A>(
-		fmap_parser<A, function<A(B)>>(
+		fmap<A, function<A(B)>>(
 			[](A a) { return [=](B) { return a; }; },
 			parser_a
 		),
@@ -93,7 +93,7 @@ Parser<B> apply_second(Parser<A> parser_a, Parser<B> parser_b)
 {
 	// (\_ b -> b) <$> parser_a <*> parser_b
 	return apply<B, B>(
-		fmap_parser<A, function<B(B)>>(
+		fmap<A, function<B(B)>>(
 			[](A) { return [](B b) { return b; }; },
 			parser_a
 		),

@@ -136,17 +136,16 @@ void test_basic_boilerplate(shared_ptr<Test> test)
 	const Parser<string> test_fmap = [&](){
 		const function<string(int)> map_fn = [](int x) { return to_string(x); };
 
-		const Parser<string> test_fn =
-			fmap_parser<int, string>(map_fn, test_pure);
+		const Parser<string> test_fn = fmap<int, string>(map_fn, test_pure);
 		test->should_be<ParsingResult<string>>(
-			"‘fmap_parser’ (int to string conversion)",
+			"‘fmap’ (int to string conversion)",
 			test_fn("foo"),
 			make_tuple("123", "foo")
 		);
 
 		const Parser<string> test_op = map_fn ^ test_pure;
 		test->should_be<ParsingResult<string>>(
-			"Operator ‘^’ for ‘fmap_parser’ (int to string conversion)",
+			"Operator ‘^’ for ‘fmap’ (int to string conversion)",
 			test_op("foo"),
 			make_tuple("123", "foo")
 		);
@@ -155,7 +154,8 @@ void test_basic_boilerplate(shared_ptr<Test> test)
 	}();
 
 	const Parser<bool> test_void_left = [&](){
-		const Parser<bool> test_fn = void_left<string, bool>(test_fmap, true);
+		const Parser<bool> test_fn =
+			void_left<Parser, string, bool>(test_fmap, true);
 		test->should_be<ParsingResult<bool>>(
 			"‘void_left’ (voiding string, replacing with bool)",
 			test_fn("foo"),
@@ -178,7 +178,7 @@ void test_basic_boilerplate(shared_ptr<Test> test)
 		T f = [](bool x) { return x ? "yes" : "no"; };
 
 		// Only testing that template compiles, see the following “test_apply”
-		const Parser<T> test_fn = void_right<T, bool>(f, test_void_left);
+		const Parser<T> test_fn = void_right<Parser, T, bool>(f, test_void_left);
 		const Parser<T> test_op = f <= test_void_left;
 
 		return test_op;

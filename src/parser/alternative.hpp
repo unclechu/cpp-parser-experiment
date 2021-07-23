@@ -37,9 +37,9 @@ Parser<A> alt(Parser<A> parser_a, Parser<A> parser_b)
 	}};
 }
 
-template <typename A>
+template <template<typename>typename F, typename A>
 // Operator equivalent for “alt”
-Parser<A> operator||(Parser<A> a, Parser<A> b)
+F<A> operator||(F<A> a, F<A> b)
 {
 	return alt<A>(a, b);
 }
@@ -133,11 +133,11 @@ Parser<vector<A>> many(Parser<A> parser)
 
 // optional_parser {{{1
 
-template<typename A>
+template<template<typename>typename F, typename A>
 // optional :: Alternative f => f a -> f (Maybe a)
-Parser<optional<A>> optional_parser(Parser<A> parser)
+F<optional<A>> optional_parser(F<A> functor)
 {
-	return (function(to_optional<A>) ^ parser) || pure<optional<A>>(nullopt);
+	return (function(to_optional<A>) ^ functor) || pure<optional<A>>(nullopt);
 }
 
 // }}}1

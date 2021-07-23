@@ -4,7 +4,7 @@
     > Combine other atomic-ish JSON parsers together in order to cover any JSON value.
     * [ ] Object parser
     * [ ] Array parser
-    * [ ] String parser
+    * [x] String parser
     * [x] Number parser (either decimal or fractional)
     * [x] Boolean parser
     * [x] Null parser

@@ -2,9 +2,10 @@ let sources = import nix/sources.nix; in
 { pkgs ? import sources.nixpkgs {}
 , with-build-dependencies ? true
 , build-the-program ? true
+, test-the-program ? true # during the build test that all unit tests are passing
 }:
 let
-  cpp-parsing = pkgs.callPackage ./. {};
+  cpp-parsing = pkgs.callPackage ./. { inherit test-the-program; };
 in
 pkgs.mkShell {
   buildInputs =

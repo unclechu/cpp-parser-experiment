@@ -1,6 +1,7 @@
 let sources = import nix/sources.nix {}; in
 { pkgs ? import sources.nixpkgs {}
 , srcDir ? ./.
+, test-the-program ? true # during the build test that all unit tests are passing
 }:
 let
   inherit (pkgs) lib nix-gitignore stdenv;
@@ -23,6 +24,7 @@ stdenv.mkDerivation {
 
   buildPhase = ''
     make
+    ${lib.optionalString test-the-program "make test"}
   '';
 
   installPhase = ''

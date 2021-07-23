@@ -30,6 +30,14 @@ directly you can omit building the app when entering a nix-shell by setting the
 nix-shell --arg build-the-program false
 ```
 
+During the build of Nix derivation it ensures that all unit tests are passing.
+If you for instance want to enter a nix-shell with broken state use this
+argument:
+
+``` sh
+nix-shell --arg test-the-program false
+```
+
 ## Author
 
 Viacheslav Lotsmanov

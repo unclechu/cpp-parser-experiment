@@ -10,6 +10,11 @@ sort of a benchmark (but you can make some merge request(s) if you’d like to
 that would fill these gaps). I only created this as a Proof of Concept and for
 fun. Nice API that would be as close as possible to Haskell was the goal.
 
+Also I didn’t plan to fully cover the whole set of JSON features. At least JSON
+string parser is not complete. It does not understand escaped unicode characters
+and stuff. This can be improved later but parsing simple JSON file is enough as
+an example for this Proof of Concept.
+
 ## Motivation
 
 **TODO:** Add a description of what this solution introduces.

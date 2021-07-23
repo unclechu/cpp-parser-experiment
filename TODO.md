@@ -1,6 +1,5 @@
 ## To Do
 
-- Read JSON from stdin
 - Implement JSON value parser
     > Combine other atomic-ish JSON parsers together in order to cover any JSON value.
     * [ ] Object parser
@@ -35,3 +34,4 @@
     * [x] unsigned fractional (floating point)
     * [x] signed fractional (reuse unsigned fractional)
 - Parse command-line arguments
+- Read JSON from stdin

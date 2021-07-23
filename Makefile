@@ -23,7 +23,7 @@ build: $(OBJ)
 	'$(CXX)' $(CXX_FLAGS) -o '$(BUILD_DIR)/$(TARGET)' $(OBJ)
 
 run: build
-	'$(BUILD_DIR)/$(TARGET)'
+	'$(BUILD_DIR)/$(TARGET)' < example.json
 
 test: build
 	'$(BUILD_DIR)/$(TARGET)' test

@@ -82,4 +82,32 @@ Parser<string> spacer()
 	return function(chars_to_string<vector>) ^ some(satisfy(is_spacer));
 }
 
+Parser<JsonArray> json_array()
+{
+	// TODO implement
+}
+
+Parser<JsonObject> json_object()
+{
+	// TODO implement
+}
+
+template <typename T>
+inline JsonValue to_json_value(T x)
+{
+	return JsonValue{x};
+}
+
+Parser<JsonValue> json_value()
+{
+	return many(spacer()) >> (
+		(function(to_json_value<JsonNull>) ^ json_null())
+		|| (function(to_json_value<JsonBool>) ^ json_bool())
+		|| (function(to_json_value<JsonNumber>) ^ json_number())
+		|| (function(to_json_value<JsonString>) ^ json_string())
+		|| (function(to_json_value<JsonArray>) ^ json_array())
+		|| (function(to_json_value<JsonObject>) ^ json_object())
+	) << many(spacer());
+}
+
 // }}}1

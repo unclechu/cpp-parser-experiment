@@ -2,9 +2,9 @@
 #include <stdexcept>
 #include <string>
 
+#include "abstractions/alternative.hpp"
+#include "abstractions/applicative.hpp"
 #include "helpers.hpp"
-#include "parser/alternative.hpp"
-#include "parser/applicative.hpp"
 #include "parser/parsers.hpp"
 
 using namespace std;

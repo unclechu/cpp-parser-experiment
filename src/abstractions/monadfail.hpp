@@ -4,20 +4,22 @@
 // MonadFail implementation (mimicking MonadFail type class from Haskell)
 //
 // Definitions in relation to Haskell (Haskell version on the left):
-//   fail → fail_parser (“fail” is occupied by STL)
+//   fail → fail
+//
+// Minimal implementaion for any new F type:
+//   fail
 
 #include <string>
 
 #include "helpers.hpp"
-#include "parser/types.hpp"
 
 using namespace std;
 
 
-template <typename A = Unit>
-Parser<A> fail_parser(string err)
+template <template<typename>typename F, typename A = Unit>
+F<A> fail(string err)
 {
-	return Parser<A>{[=](Input) { return ParsingError{err}; }};
+	return fail<A>(err);
 }
 
 #endif

@@ -9,24 +9,20 @@
 //   *>  → >>
 
 #include <functional>
-#include <tuple>
-#include <variant>
 
+#include "abstractions/functor.hpp"
 #include "helpers.hpp"
-#include "parser/functor.hpp"
-#include "parser/types.hpp"
 
 using namespace std;
 
 
 // pure {{{1
 
-template <typename A>
+template <template<typename>typename F, typename A>
 // pure :: Applicative f => a -> f a
-// pure :: Applicative f => a -> Parser a
-Parser<A> pure(A x)
+F<A> pure(A x)
 {
-	return Parser<A>{[=](Input input) { return make_tuple(x, input); }};
+	return pure<A>(x);
 }
 
 // }}}1
@@ -34,27 +30,18 @@ Parser<A> pure(A x)
 
 // apply {{{1
 
-template <typename A, typename B>
+template <template<typename>typename F, typename A, typename B>
 // (<*>) :: f (a → b) → f a → f b
-// (<*>) :: Parser (a → b) → Parser a → Parser b
-Parser<B> apply(Parser<function<B(A)>> fn_parser, Parser<A> parser)
+F<B> apply(F<function<B(A)>> wrapped_fn, F<A> functor)
 {
-	return Parser<B>{[=](Input input) -> ParsingResult<B> {
-		return visit(overloaded {
-			[=](ParsingSuccess<function<B(A)>> x) -> ParsingResult<B> {
-				auto [ fn, tail ] = x;
-				return fmap<A, B>(fn, parser)(tail);
-			},
-			[](ParsingError err) -> ParsingResult<B> { return err; }
-		}, fn_parser(input));
-	}};
+	return apply<A, B>(wrapped_fn, functor);
 }
 
 template <template<typename>typename F, typename A, typename B>
 // Operator equivalent for “apply”
 F<B> operator^(F<function<B(A)>> wrapped_fn, F<A> functor)
 {
-	return apply<A, B>(wrapped_fn, functor);
+	return apply<F, A, B>(wrapped_fn, functor);
 }
 
 // }}}1
@@ -69,8 +56,8 @@ template <template<typename>typename F, typename A, typename B>
 F<A> apply_first(F<A> functor_a, F<B> functor_b)
 {
 	// (\a _ -> a) <$> functor_a <*> functor_b
-	return apply<B, A>(
-		fmap<A, function<A(B)>>(
+	return apply<F, B, A>(
+		fmap<F, A, function<A(B)>>(
 			[](A a) { return [=](B) { return a; }; },
 			functor_a
 		),
@@ -94,8 +81,8 @@ template <template<typename>typename F, typename A, typename B>
 F<B> apply_second(F<A> functor_a, F<B> functor_b)
 {
 	// (\_ b -> b) <$> functor_a <*> functor_b
-	return apply<B, B>(
-		fmap<A, function<B(B)>>(
+	return apply<F, B, B>(
+		fmap<F, A, function<B(B)>>(
 			[](A) { return [](B b) { return b; }; },
 			functor_a
 		),

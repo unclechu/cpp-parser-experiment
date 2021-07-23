@@ -3,13 +3,17 @@
 
 // Building blocks for writing more complex parsers
 
+#include <functional>
 #include <string>
 
+#include "abstractions/alternative.hpp"
 #include "helpers.hpp"
-#include "parser/alternative.hpp"
 #include "parser/types.hpp"
 
-std::string char_as_str(char c);
+using namespace std;
+
+
+string char_as_str(char c);
 Parser<Unit> end_of_input();
 Parser<char> any_char();
 Parser<char> char_(char c);

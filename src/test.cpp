@@ -9,15 +9,17 @@
 #include <variant>
 #include <vector>
 
-#include "helpers.hpp"
-#include "parser/alternative.hpp"
-#include "parser/applicative.hpp"
-#include "parser/functor.hpp"
-#include "parser/helpers.hpp"
-#include "parser/monadfail.hpp"
+#include "parser/types.hpp"
+
+#include "abstractions/alternative.hpp"
+#include "abstractions/applicative.hpp"
+#include "abstractions/functor.hpp"
+#include "abstractions/monadfail.hpp"
+
 #include "parser/parsers.hpp"
 #include "parser/resolvers.hpp"
-#include "parser/types.hpp"
+
+#include "helpers.hpp"
 #include "test.hpp"
 
 using namespace std;
@@ -265,38 +267,38 @@ void test_basic_boilerplate(shared_ptr<Test> test)
 	// Fail parser {{{3
 	{
 		const Parser<int> test_fail =
-			fail_parser("Failed to parse") >> test_apply_first;
+			fail("Failed to parse") >> test_apply_first;
 		test->should_be<ParsingResult<int>>(
-			"‘fail_parser’ fails the parser",
+			"‘fail’ fails the parser",
 			test_fail("foo"),
 			ParsingError{"Failed to parse"}
 		);
 	}{
 		const Parser<int> test_fail =
-			test_apply_first << fail_parser("Failed to parse");
+			test_apply_first << fail("Failed to parse");
 		test->should_be<ParsingResult<int>>(
-			"‘fail_parser’ fails the parser no matter in what order it’s composed",
+			"‘fail’ fails the parser no matter in what order it’s composed",
 			test_fail("foo"),
 			ParsingError{"Failed to parse"}
 		);
 	}{
-		const Parser<int> test_fail = 123 <= fail_parser("Failed to parse");
+		const Parser<int> test_fail = 123 <= fail("Failed to parse");
 		test->should_be<ParsingResult<int>>(
-			"‘fail_parser’ fails with ‘<=’ operator (‘void_right’)",
+			"‘fail’ fails with ‘<=’ operator (‘void_right’)",
 			test_fail("foo"),
 			ParsingError{"Failed to parse"}
 		);
 	}{
-		const Parser<int> test_fail = fail_parser("Failed to parse") >= 123;
+		const Parser<int> test_fail = fail("Failed to parse") >= 123;
 		test->should_be<ParsingResult<int>>(
-			"‘fail_parser’ fails with ‘<=’ operator (‘void_left’)",
+			"‘fail’ fails with ‘<=’ operator (‘void_left’)",
 			test_fail("foo"),
 			ParsingError{"Failed to parse"}
 		);
 	}{
-		const Parser<int> test_fail = fail_parser<int>("Failed to parse");
+		const Parser<int> test_fail = fail<int>("Failed to parse");
 		test->should_be<ParsingResult<int>>(
-			"‘fail_parser’ fails alone having any type",
+			"‘fail’ fails alone having any type",
 			test_fail("foo"),
 			ParsingError{"Failed to parse"}
 		);
@@ -319,7 +321,7 @@ void test_basic_boilerplate(shared_ptr<Test> test)
 		);
 
 		const Parser<int> test_second_pure =
-			fail_parser<int>("failure") || pure(20);
+			fail<int>("failure") || pure(20);
 		test->should_be<ParsingResult<int>>(
 			"‘alt’ returns second when first is a failure",
 			test_second_pure("foo"),
@@ -327,7 +329,7 @@ void test_basic_boilerplate(shared_ptr<Test> test)
 		);
 
 		const Parser<int> test_both_failed =
-			fail_parser<int>("one") || fail_parser<int>("two");
+			fail<int>("one") || fail<int>("two");
 		test->should_be<ParsingResult<int>>(
 			"‘alt’ returns last error if both have failed",
 			test_both_failed("foo"),
@@ -335,9 +337,9 @@ void test_basic_boilerplate(shared_ptr<Test> test)
 		);
 
 		const Parser<int> test_three_failed =
-			fail_parser<int>("one")
-				|| fail_parser<int>("two")
-				|| fail_parser<int>("three");
+			fail<int>("one")
+				|| fail<int>("two")
+				|| fail<int>("three");
 		test->should_be<ParsingResult<int>>(
 			"‘alt’ returns last error if three have failed",
 			test_three_failed("foo"),
@@ -345,9 +347,9 @@ void test_basic_boilerplate(shared_ptr<Test> test)
 		);
 
 		const Parser<int> test_three_second_successful =
-			fail_parser<int>("one")
+			fail<int>("one")
 				|| pure(20)
-				|| fail_parser<int>("three");
+				|| fail<int>("three");
 		test->should_be<ParsingResult<int>>(
 			"‘alt’ returns second successful when 2 other failed",
 			test_three_second_successful("foo"),
@@ -355,8 +357,8 @@ void test_basic_boilerplate(shared_ptr<Test> test)
 		);
 
 		const Parser<int> test_three_last_successful =
-			fail_parser<int>("one")
-				|| fail_parser<int>("two")
+			fail<int>("one")
+				|| fail<int>("two")
 				|| pure(30);
 		test->should_be<ParsingResult<int>>(
 			"‘alt’ returns last successful when 2 other failed",

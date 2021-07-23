@@ -4,6 +4,9 @@
 // Functions that are useful for initiating parsing and resolving the parsing
 // result.
 
+#include <functional>
+#include <variant>
+
 #include "helpers.hpp"
 #include "parser/types.hpp"
 

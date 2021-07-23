@@ -6,12 +6,11 @@
 #include <tuple>
 #include <variant>
 
+#include "abstractions/alternative.hpp"
+#include "abstractions/applicative.hpp"
+#include "abstractions/functor.hpp"
 #include "helpers.hpp"
 #include "json.hpp"
-#include "parser/alternative.hpp"
-#include "parser/applicative.hpp"
-#include "parser/functor.hpp"
-#include "parser/helpers.hpp"
 #include "parser/parsers.hpp"
 #include "parser/types.hpp"
 

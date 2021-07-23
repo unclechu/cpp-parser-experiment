@@ -58,6 +58,11 @@ JsonString make_json_string(string x)
 	return JsonString{make_tuple(x)};
 };
 
+string from_json_string(JsonString x)
+{
+	return get<0>(x);
+}
+
 // WARNING! This implementation is incomplete. For instance escaped unicode
 // characters are not supported (e.g. “\uD83D\uDE10”).
 // You can find more details here: https://www.ietf.org/rfc/rfc4627.txt
@@ -96,8 +101,7 @@ Parser<vector<T>> optional_list(Parser<vector<T>> parser)
 Parser<JsonArray> json_array()
 {
 	Parser<char> separator = spacer() >> char_(',') << spacer();
-	using T = vector<JsonValue>;
-	Parser<T> elements = separated_some(json_value(), separator);
+	Parser<vector<JsonValue>> elements = separated_some(json_value(), separator);
 	return prefix_parsing_failure(
 		"JsonArray",
 		char_('[') >> spacer()
@@ -106,11 +110,38 @@ Parser<JsonArray> json_array()
 	);
 }
 
+inline JsonObject make_json_object(map<string, JsonValue> x)
+{
+	return JsonObject{x};
+}
+
+template <typename K, typename V>
+inline map<K, V> make_map_from_vector(vector<tuple<K, V>> list)
+{
+	map<K, V> result;
+	for (auto [ k, v ] : list) result.insert(make_pair(k, v));
+	return result;
+}
+
 Parser<JsonObject> json_object()
 {
-	/*return prefix_parsing_failure(
-		"JsonObject"
-	);*/
+	Parser<char> separator = spacer() >> char_(',') << spacer();
+	using Entry = tuple<string, JsonValue>;
+
+	Parser<Entry> entry =
+		function(curry<string, JsonValue, Entry>(make_tuple<string, JsonValue>))
+		^ (function(from_json_string) ^ json_string()) << spacer() << char_(':')
+		^ spacer() >> json_value();
+
+	Parser<map<string, JsonValue>> entries =
+		function(make_map_from_vector<string, JsonValue>)
+		^ separated_some(entry, separator);
+
+	return prefix_parsing_failure(
+		"JsonObject",
+		function(make_json_object)
+			^ char_('{') >> spacer() >> entries << spacer() << char_('}')
+	);
 }
 
 template <typename T>

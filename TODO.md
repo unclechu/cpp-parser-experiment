@@ -2,7 +2,7 @@
 
 - Implement JSON value parser
     > Combine other atomic-ish JSON parsers together in order to cover any JSON value.
-    * [ ] Object parser
+    * [x] Object parser
     * [x] Array parser
     * [x] String parser
     * [x] Number parser (either decimal or fractional)

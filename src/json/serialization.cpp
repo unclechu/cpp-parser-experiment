@@ -29,13 +29,9 @@ string serialize_json(
 	bool first (true);
 
 	for (pair<string, JsonValue> x : map) {
-		if (first) {
-			first = false;
-			out << block_indent << cur_indent;
-		} else {
-			out << "," << line_break << block_indent << cur_indent;
-		}
+		if (first) first = false; else out << "," << line_break;
 		out
+			<< block_indent << cur_indent
 			<< serialize_json(make_json_string(x.first))
 			<< ":"
 			<< (block_indent.empty() && line_break.empty() ? "" : " ")
@@ -66,13 +62,9 @@ string serialize_json(
 	bool first (true);
 
 	for (JsonValue x : array) {
-		if (first) {
-			first = false;
-			out << block_indent << cur_indent;
-		} else {
-			out << "," << line_break << block_indent << cur_indent;
-		}
+		if (first) first = false; else out << "," << line_break;
 		out
+			<< block_indent << cur_indent
 			<< serialize_json(
 				x,
 				line_break,

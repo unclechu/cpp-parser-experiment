@@ -1,5 +1,5 @@
-#ifndef _PARSER_MONADFAIL_HPP_
-#define _PARSER_MONADFAIL_HPP_
+#ifndef _ABSTRACTIONS_MONADFAIL_HPP_
+#define _ABSTRACTIONS_MONADFAIL_HPP_
 
 // MonadFail implementation (mimicking MonadFail type class from Haskell)
 //

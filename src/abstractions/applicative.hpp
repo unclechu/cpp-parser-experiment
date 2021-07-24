@@ -1,5 +1,5 @@
-#ifndef _PARSER_APPLICATIVE_HPP_
-#define _PARSER_APPLICATIVE_HPP_
+#ifndef _ABSTRACTIONS_APPLICATIVE_HPP_
+#define _ABSTRACTIONS_APPLICATIVE_HPP_
 
 // Applicative implementation (mimicking Applicative type class from Haskell)
 //

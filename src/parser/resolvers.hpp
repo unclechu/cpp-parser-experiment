@@ -1,5 +1,5 @@
-#ifndef _RESOLVERS_HPP_
-#define _RESOLVERS_HPP_
+#ifndef _PARSER_RESOLVERS_HPP_
+#define _PARSER_RESOLVERS_HPP_
 
 // Functions that are useful for initiating parsing and resolving the parsing
 // result.

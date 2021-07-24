@@ -1,5 +1,5 @@
-#ifndef _PARSER_ALTERNATIVE_HPP_
-#define _PARSER_ALTERNATIVE_HPP_
+#ifndef _ABSTRACTIONS_ALTERNATIVE_HPP_
+#define _ABSTRACTIONS_ALTERNATIVE_HPP_
 
 // Alternative implementation (mimicking Alternative type class from Haskell)
 //

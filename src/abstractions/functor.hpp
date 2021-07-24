@@ -1,5 +1,5 @@
-#ifndef _PARSER_FUNCTOR_HPP_
-#define _PARSER_FUNCTOR_HPP_
+#ifndef _ABSTRACTIONS_FUNCTOR_HPP_
+#define _ABSTRACTIONS_FUNCTOR_HPP_
 
 // Functor implementation (mimicking Functor type class from Haskell)
 //

@@ -12,6 +12,7 @@
 #include "helpers.hpp"
 #include "json.hpp"
 #include "parser/parsers.hpp"
+#include "parser/resolvers.hpp"
 #include "parser/types.hpp"
 
 using namespace std;
@@ -98,10 +99,17 @@ Parser<vector<T>> optional_list(Parser<vector<T>> parser)
 	return parser || pure<decltype(empty_list)>(empty_list);
 }
 
+// Lazy evaluation (avoid infinite recursion)
+inline Parser<JsonValue> lazy_json_value()
+{
+	return Parser<JsonValue>{[](Input input) { return json_value()(input); }};
+}
+
 Parser<JsonArray> json_array()
 {
 	Parser<char> separator = spacer() >> char_(',') << spacer();
-	Parser<vector<JsonValue>> elements = separated_some(json_value(), separator);
+	Parser<vector<JsonValue>> elements =
+		separated_some(lazy_json_value(), separator);
 	return prefix_parsing_failure(
 		"JsonArray",
 		char_('[') >> spacer()
@@ -131,7 +139,7 @@ Parser<JsonObject> json_object()
 	Parser<Entry> entry =
 		function(curry<string, JsonValue, Entry>(make_tuple<string, JsonValue>))
 		^ (function(from_json_string) ^ json_string()) << spacer() << char_(':')
-		^ spacer() >> json_value();
+		^ spacer() >> lazy_json_value();
 
 	Parser<map<string, JsonValue>> entries =
 		function(make_map_from_vector<string, JsonValue>)
@@ -163,6 +171,16 @@ Parser<JsonValue> json_value()
 			|| (function(make_json_value<JsonObject>) ^ json_object())
 		) << spacer()
 	);
+}
+
+// }}}1
+
+
+// Parsing {{{1
+
+variant<ParsingError, JsonValue> parse_json(Input input)
+{
+	return parse<JsonValue>(json_value() << end_of_input(), input);
 }
 
 // }}}1

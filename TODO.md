@@ -1,14 +1,7 @@
 ## To Do
 
-- Implement JSON value parser
-    > Combine other atomic-ish JSON parsers together in order to cover any JSON value.
-    * [x] Object parser
-    * [x] Array parser
-    * [x] String parser
-    * [x] Number parser (either decimal or fractional)
-    * [x] Boolean parser
-    * [x] Null parser
-- Pretty-printer for JSON
+- JSON serialization
+    * [ ] Pretty printing
 - Nix: Add build option for using clang instead of gcc
 - Implement parsing some structure from “JsonValue”
     > Like “Data.Aeson.FromJSON” in Haskell but without deriving abilities.
@@ -42,3 +35,11 @@
     * [x] signed fractional (reuse unsigned fractional)
 - Parse command-line arguments
 - Read JSON from stdin
+- Implement JSON value parser
+    > Combine other atomic-ish JSON parsers together in order to cover any JSON value.
+    * [x] Object parser
+    * [x] Array parser
+    * [x] String parser
+    * [x] Number parser (either decimal or fractional)
+    * [x] Boolean parser
+    * [x] Null parser

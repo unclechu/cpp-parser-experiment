@@ -2,8 +2,11 @@
 #include <sstream>
 #include <string.h>
 #include <string>
+#include <variant>
 
+#include "helpers.hpp"
 #include "json.hpp"
+#include "parser/types.hpp"
 #include "test.hpp"
 
 using namespace std;
@@ -26,9 +29,17 @@ void show_usage(ostream& out, char* app)
 
 int parse_json(bool pretty_printer, string json_input)
 {
-	cerr << "TODO: Implement JSON parsing" << endl;
 	cerr << "Debug JSON input: “" << json_input << "”" << endl;
-	return EXIT_FAILURE;
+	return visit(overloaded {
+		[](ParsingError err) {
+			cerr << "Failed to parse JSON: " << err << endl;
+			return EXIT_FAILURE;
+		},
+		[](JsonValue) {
+			cerr << "TODO: Implement JSON serializing" << endl;
+			return EXIT_SUCCESS;
+		}
+	}, parse_json(json_input));
 }
 
 int main(int argc, char* argv[])

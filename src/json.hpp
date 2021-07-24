@@ -43,4 +43,7 @@ Parser<JsonArray> json_array();
 Parser<JsonObject> json_object();
 Parser<JsonValue> json_value();
 
+// Parsing
+variant<ParsingError, JsonValue> parse_json(Input input);
+
 #endif

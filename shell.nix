@@ -10,6 +10,10 @@ in
 pkgs.mkShell {
   buildInputs =
     pkgs.lib.optionals with-build-dependencies
-      (cpp-parsing.nativeBuildInputs ++ cpp-parsing.buildInputs)
+      (cpp-parsing.nativeBuildInputs ++ cpp-parsing.buildInputs ++ [
+        pkgs.bash
+        pkgs.jq
+        pkgs.diffutils
+      ])
     ++ pkgs.lib.optional build-the-program cpp-parsing;
 }

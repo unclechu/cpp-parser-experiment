@@ -20,6 +20,10 @@ stdenv.mkDerivation {
   nativeBuildInputs = [
     pkgs.gcc
     pkgs.gnumake
+  ] ++ lib.optionals test-the-program [
+    pkgs.bash
+    pkgs.jq
+    pkgs.diffutils
   ];
 
   buildPhase = ''

@@ -143,7 +143,7 @@ Parser<JsonObject> json_object()
 
 	Parser<map<string, JsonValue>> entries =
 		function(make_map_from_vector<string, JsonValue>)
-		^ separated_some(entry, separator);
+		^ optional_list(separated_some(entry, separator));
 
 	return prefix_parsing_failure(
 		"JsonObject",

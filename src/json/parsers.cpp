@@ -29,12 +29,10 @@ Parser<JsonNull> json_null()
 
 Parser<JsonBool> json_bool()
 {
-	function<JsonBool(bool)> fn = [](bool x) {
-		return JsonBool{make_tuple(x)};
-	};
 	return prefix_parsing_failure(
 		"JsonBool",
-		fn ^ (string_("true") >= true || string_("false") >= false)
+		function(make_json_bool)
+		^ (string_("true") >= true || string_("false") >= false)
 	);
 }
 
@@ -105,7 +103,7 @@ Parser<JsonObject> json_object()
 	return prefix_parsing_failure(
 		"JsonObject",
 		function(make_json_object)
-			^ char_('{') >> spacer() >> entries << spacer() << char_('}')
+		^ char_('{') >> spacer() >> entries << spacer() << char_('}')
 	);
 }
 

@@ -38,7 +38,6 @@ Parser<JsonBool> json_bool()
 	);
 }
 
-
 Parser<JsonNumber> json_number()
 {
 	return prefix_parsing_failure(
@@ -47,7 +46,6 @@ Parser<JsonNumber> json_number()
 		(function(make_json_number<int>) ^ signed_decimal())
 	);
 }
-
 
 // WARNING! This implementation is incomplete. For instance escaped unicode
 // characters are not supported (e.g. “\uD83D\uDE10”).
@@ -69,14 +67,6 @@ Parser<string> spacer()
 		return c == ' ' || c == '\t' || c == '\n' || c == '\r';
 	});
 	return function(chars_to_string<vector>) ^ many(spacer_char);
-}
-
-template <typename T>
-// Resolved to empty list by default
-Parser<vector<T>> optional_list(Parser<vector<T>> parser)
-{
-	vector<T> empty_list;
-	return parser || pure<decltype(empty_list)>(empty_list);
 }
 
 // Lazy evaluation (avoid infinite recursion)

@@ -43,4 +43,12 @@ Parser<int> signed_decimal();
 Parser<double> unsigned_fractional();
 Parser<double> signed_fractional();
 
+template <typename T>
+// Resolved to empty list by default
+Parser<vector<T>> optional_list(Parser<vector<T>> parser)
+{
+	vector<T> empty_list;
+	return parser || pure<decltype(empty_list)>(empty_list);
+}
+
 #endif

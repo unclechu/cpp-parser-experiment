@@ -6,6 +6,7 @@
 
 #include "helpers.hpp"
 #include "json/parsers.hpp"
+#include "json/serialization.hpp"
 #include "json/types.hpp"
 #include "parser/types.hpp"
 #include "test.hpp"
@@ -30,14 +31,19 @@ void show_usage(ostream& out, char* app)
 
 int parse_json(bool pretty_printer, string json_input)
 {
-	cerr << "Debug JSON input: “" << json_input << "”" << endl;
 	return visit(overloaded {
 		[](ParsingError err) {
 			cerr << "Failed to parse JSON: " << err << endl;
 			return EXIT_FAILURE;
 		},
-		[](JsonValue) {
-			cerr << "TODO: Implement JSON serializing" << endl;
+		[pretty_printer](JsonValue x) {
+			if (pretty_printer) {
+				ostringstream out;
+				out << endl;
+				cout << serialize_json(x, out.str(), "  ") << endl;
+			} else {
+				cout << serialize_json(x) << endl;
+			}
 			return EXIT_SUCCESS;
 		}
 	}, parse_json(json_input));

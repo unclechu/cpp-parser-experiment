@@ -1,7 +1,5 @@
 ## To Do
 
-- JSON serialization
-    * [ ] Pretty printing
 - Nix: Add build option for using clang instead of gcc
 - Implement parsing some structure from “JsonValue”
     > Like “Data.Aeson.FromJSON” in Haskell but without deriving abilities.
@@ -43,3 +41,5 @@
     * [x] Number parser (either decimal or fractional)
     * [x] Boolean parser
     * [x] Null parser
+- JSON serialization
+    * [x] Pretty printing

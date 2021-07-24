@@ -5,7 +5,8 @@
 #include <variant>
 
 #include "helpers.hpp"
-#include "json.hpp"
+#include "json/parsers.hpp"
+#include "json/types.hpp"
 #include "parser/types.hpp"
 #include "test.hpp"
 

@@ -10,15 +10,14 @@
 #include "abstractions/applicative.hpp"
 #include "abstractions/functor.hpp"
 #include "helpers.hpp"
-#include "json.hpp"
+#include "json/parsers.hpp"
+#include "json/types.hpp"
 #include "parser/parsers.hpp"
 #include "parser/resolvers.hpp"
 #include "parser/types.hpp"
 
 using namespace std;
 
-
-// Parsers {{{1
 
 Parser<JsonNull> json_null()
 {
@@ -39,30 +38,16 @@ Parser<JsonBool> json_bool()
 	);
 }
 
-template <typename T>
-inline JsonNumber to_json_number(T x)
-{
-	return JsonNumber{make_tuple(x)};
-}
 
 Parser<JsonNumber> json_number()
 {
 	return prefix_parsing_failure(
 		"JsonNumber",
-		(function(to_json_number<double>) ^ signed_fractional()) ||
-		(function(to_json_number<int>) ^ signed_decimal())
+		(function(make_json_number<double>) ^ signed_fractional()) ||
+		(function(make_json_number<int>) ^ signed_decimal())
 	);
 }
 
-JsonString make_json_string(string x)
-{
-	return JsonString{make_tuple(x)};
-};
-
-string from_json_string(JsonString x)
-{
-	return get<0>(x);
-}
 
 // WARNING! This implementation is incomplete. For instance escaped unicode
 // characters are not supported (e.g. “\uD83D\uDE10”).
@@ -84,11 +69,6 @@ Parser<string> spacer()
 		return c == ' ' || c == '\t' || c == '\n' || c == '\r';
 	});
 	return function(chars_to_string<vector>) ^ many(spacer_char);
-}
-
-inline JsonArray make_json_array(vector<JsonValue> x)
-{
-	return JsonArray{make_tuple(x)};
 }
 
 template <typename T>
@@ -118,19 +98,6 @@ Parser<JsonArray> json_array()
 	);
 }
 
-inline JsonObject make_json_object(map<string, JsonValue> x)
-{
-	return JsonObject{x};
-}
-
-template <typename K, typename V>
-inline map<K, V> make_map_from_vector(vector<tuple<K, V>> list)
-{
-	map<K, V> result;
-	for (auto [ k, v ] : list) result.insert(make_pair(k, v));
-	return result;
-}
-
 Parser<JsonObject> json_object()
 {
 	Parser<char> separator = spacer() >> char_(',') << spacer();
@@ -152,12 +119,6 @@ Parser<JsonObject> json_object()
 	);
 }
 
-template <typename T>
-inline JsonValue make_json_value(T x)
-{
-	return JsonValue{x};
-}
-
 Parser<JsonValue> json_value()
 {
 	return prefix_parsing_failure(
@@ -173,14 +134,7 @@ Parser<JsonValue> json_value()
 	);
 }
 
-// }}}1
-
-
-// Parsing {{{1
-
 variant<ParsingError, JsonValue> parse_json(Input input)
 {
 	return parse<JsonValue>(json_value() << end_of_input(), input);
 }
-
-// }}}1

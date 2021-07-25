@@ -57,19 +57,19 @@ inline string chars_to_string(T<char> list)
 
 template <typename A, typename B>
 // Idempotency
-function<B(A)> curry(function<B(A)> fn)
+inline function<B(A)> curry(function<B(A)> fn)
 {
 	return fn;
 }
 
 template <typename A, typename B, typename C>
-function<function<C(B)>(A)> curry(function<C(A, B)> fn)
+inline function<function<C(B)>(A)> curry(function<C(A, B)> fn)
 {
 	return [=](A a) { return [=](B b) { return fn(a, b); }; };
 }
 
 template <typename A, typename B, typename C, typename D>
-function<function<function<D(C)>(B)>(A)> curry(function<D(A, B, C)> fn)
+inline function<function<function<D(C)>(B)>(A)> curry(function<D(A, B, C)> fn)
 {
 	return [=](A a) { return [=](B b) { return [=](C c) {
 		return fn(a, b, c);
@@ -77,7 +77,7 @@ function<function<function<D(C)>(B)>(A)> curry(function<D(A, B, C)> fn)
 }
 
 template <typename A, typename B, typename C, typename D, typename E>
-function<function<function<function<E(D)>(C)>(B)>(A)> curry(
+inline function<function<function<function<E(D)>(C)>(B)>(A)> curry(
 	function<E(A, B, C, D)> fn
 )
 {

@@ -3,17 +3,16 @@ let sources = import nix/sources.nix; in
 , with-build-dependencies ? true
 , build-the-program ? true
 , test-the-program ? true # during the build test that all unit tests are passing
+, use-clang ? false # build using Clang instead of GCC
 }:
 let
-  cpp-parsing = pkgs.callPackage ./. { inherit test-the-program; };
+  cpp-parsing = pkgs.callPackage ./. { inherit test-the-program use-clang; };
 in
 pkgs.mkShell {
   buildInputs =
     pkgs.lib.optionals with-build-dependencies
-      (cpp-parsing.nativeBuildInputs ++ cpp-parsing.buildInputs ++ [
-        pkgs.bash
-        pkgs.jq
-        pkgs.diffutils
-      ])
+      (cpp-parsing.nativeBuildInputs
+      ++ cpp-parsing.buildInputs
+      ++ cpp-parsing.testingDependencies)
     ++ pkgs.lib.optional build-the-program cpp-parsing;
 }

@@ -72,6 +72,33 @@ nix-shell --arg build-the-program false --run 'make run'
 
 See [Makefile](Makefile) for all available commands.
 
+#### Clang support
+
+**WARNING!** Currently Clang fails to build this program. There are some
+problems with type deduction. This needs to be fixed.
+
+GCC is used by default. But you can use Clang instead by setting `use-clang`
+Nix argument to `true` like this:
+
+``` sh
+nix-shell --arg use-clang true --run 'cpp-parsing --pretty < example.json'
+```
+
+Or:
+
+``` sh
+nix build --arg use-clang true
+```
+
+##### Overriding compiler for GNU/Make
+
+If you want/need to use Clang with `make` directly here is an example of how you
+can do it:
+
+``` sh
+nix-shell --arg build-the-program false --arg use-clang true --run 'make test CXX=clang++'
+```
+
 ## Author
 
 Viacheslav Lotsmanov

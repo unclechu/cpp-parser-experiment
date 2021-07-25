@@ -1,6 +1,7 @@
 ## To Do
 
 - Nix: Add build option for using clang instead of gcc
+    * [ ] Fix building errors when using clang
 - Implement parsing some structure from “JsonValue”
     > Like “Data.Aeson.FromJSON” in Haskell but without deriving abilities.
     * [ ] Template “fromJSON”

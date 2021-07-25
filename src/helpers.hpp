@@ -45,17 +45,8 @@ inline A negative(A x)
 }
 
 
-// Clang has problems with handling this template
-/*
-template <template<typename>typename T>
-string chars_to_string(T<char> list)
-{
-	string str(list.begin(), list.end());
-	return str;
-}
-*/
-
-inline string chars_to_string(vector<char> list)
+template <template<typename...>typename T>
+inline string chars_to_string(T<char> list)
 {
 	string str(list.begin(), list.end());
 	return str;

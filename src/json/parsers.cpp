@@ -54,10 +54,8 @@ Parser<JsonString> json_string()
 	Parser<char> non_quote_char = satisfy([](char x) { return x != '"'; });
 	return prefix_parsing_failure(
 		"JsonString",
-		compose(
-			function(make_json_string),
-			function<string(vector<char>)>(chars_to_string)
-		) ^ char_('"') >> some(escaped_quote || non_quote_char) << char_('"')
+		(function(make_json_string) < function(chars_to_string<vector>))
+		^ char_('"') >> some(escaped_quote || non_quote_char) << char_('"')
 	);
 }
 
@@ -66,7 +64,7 @@ Parser<string> spacer()
 	Parser<char> spacer_char = satisfy([](char c) {
 		return c == ' ' || c == '\t' || c == '\n' || c == '\r';
 	});
-	return function<string(vector<char>)>(chars_to_string) ^ many(spacer_char);
+	return function(chars_to_string<vector>) ^ many(spacer_char);
 }
 
 // Lazy evaluation (avoid infinite recursion)

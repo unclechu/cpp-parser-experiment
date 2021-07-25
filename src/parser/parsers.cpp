@@ -115,7 +115,7 @@ Parser<string> digits()
 {
 	return prefix_parsing_failure(
 		"digits",
-		function<string(vector<char>)>(chars_to_string) ^ some(digit())
+		function(chars_to_string<vector>) ^ some(digit())
 	);
 }
 

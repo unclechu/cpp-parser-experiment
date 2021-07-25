@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -101,7 +102,7 @@ inline variant<
 	JsonNull
 > from_json_value(JsonValue x)
 {
-	return x;
+	return move(x);
 }
 
 // }}}1

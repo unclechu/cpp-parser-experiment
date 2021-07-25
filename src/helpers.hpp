@@ -78,7 +78,7 @@ function<function<function<D(C)>(B)>(A)> curry(function<D(A, B, C)> fn)
 
 template <typename A, typename B, typename C, typename D, typename E>
 function<function<function<function<E(D)>(C)>(B)>(A)> curry(
-	function<E(A, B, C, D)> curried_fn
+	function<E(A, B, C, D)> fn
 )
 {
 	return [=](A a) { return [=](B b) { return [=](C c) { return [=](C d) {

@@ -6,7 +6,7 @@ CPP_STANDARD := c++17
 CXX := g++
 CXX_FLAGS := -O2 -Wall -Wextra -std='$(CPP_STANDARD)' -Isrc
 
-SRC := $(wildcard src/*.cpp src/**/*.cpp)
+SRC := $(wildcard src/*.cpp src/*/*.cpp src/*/*/*.cpp)
 OBJ := $(patsubst %.cpp,%.o,$(patsubst src/%,$(BUILD_DIR)/%,$(SRC)))
 
 all: clean build

@@ -3,6 +3,7 @@ let sources = import nix/sources.nix {}; in
 , src-dir ? ./.
 , test-the-program ? true # during the build test that all unit tests are passing
 , use-clang ? false # build using Clang instead of GCC
+, clang-version ? 12 # Clang version to use (either a number or a derivation)
 }:
 let
   inherit (pkgs) lib nix-gitignore stdenv;
@@ -20,7 +21,13 @@ let
     pkgs.diffutils
   ];
 
-  clang = pkgs.clang_12;
+  clang =
+    if builtins.isInt clang-version
+    then pkgs."clang_${toString clang-version}"
+    else
+    if lib.isDerivation clang-version
+    then clang-version
+    else throw "Unexpected “clang-version” type: ${builtins.typeOf clang-version}";
 
   overrideMakeCompiler =
     lib.optionalString use-clang

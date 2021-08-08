@@ -15,23 +15,23 @@ using namespace std;
 
 // parsing_resolver {{{1
 
-template <typename A, typename B>
+template <typename A, typename B, template<typename>typename F>
 // either :: (a → c) → (b → c) → Either a b → c
 //   ↑ kind of, the last “c” is more like “ParsingResult c”
 // You can also interpret this as “bimap” except that in the second argument you
-// don’t need to handle the “Input” tail.
-function<B(ParsingResult<A>)> parsing_resolver(
-	function<B(ParsingError)> failure_resolve,
+// don’t need to handle the input tail.
+function<B(ParsingResult<A, ParserInputType<F>>)> parsing_resolver(
+	function<B(ParsingError<ParserInputType<F>>)> failure_resolve,
 	function<B(A)> success_resolve
 )
 {
-	return [=](ParsingResult<A> result) {
+	return [=](ParsingResult<A, ParserInputType<F>> result) {
 		return visit(overloaded {
-			[=](ParsingSuccess<A> x) -> B {
+			[success_resolve](ParsingSuccess<A, ParserInputType<F>> x) -> B {
 				auto [ value, _ ] = x;
 				return success_resolve(value);
 			},
-			[=](ParsingError err) -> B {
+			[failure_resolve](ParsingError<ParserInputType<F>> err) -> B {
 				return failure_resolve(err);
 			}
 		}, result);
@@ -42,19 +42,26 @@ function<B(ParsingResult<A>)> parsing_resolver(
 
 // parse {{{1
 
-template <typename A, typename B>
-B parse(function<B(ParsingResult<A>)> resolver, Parser<A> parser, Input input)
+template <typename A, typename B, template<typename>typename F>
+B parse(
+	function<B(ParsingResult<A, ParserInputType<F>>)> resolver,
+	F<A> parser,
+	ParserInputType<F> input
+)
 {
 	return resolver(parser(input));
 }
 
-template <typename A>
-variant<ParsingError, A> parse(Parser<A> parser, Input input)
+template <typename A, template<typename>typename F>
+variant<ParsingError<ParserInputType<F>>, A> parse(
+	F<A> parser,
+	ParserInputType<F> input
+)
 {
-	using Result = variant<ParsingError, A>;
+	using Result = variant<ParsingError<ParserInputType<F>>, A>;
 	return parse<A, Result>(
-		parsing_resolver<A, Result>(
-			[](ParsingError err) { return err; },
+		parsing_resolver<A, Result, F>(
+			[](ParsingError<ParserInputType<F>> err) { return err; },
 			[](A x) { return x; }
 		),
 		parser,

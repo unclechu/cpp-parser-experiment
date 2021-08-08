@@ -55,34 +55,64 @@ inline string chars_to_string(T<char> list)
 
 // curry {{{1
 
-template <typename A, typename B>
+template <typename R, typename A>
 // Idempotency
-inline function<B(A)> curry(function<B(A)> fn)
+inline function<R(A)> curry(function<R(A)> fn)
 {
 	return fn;
 }
 
-template <typename A, typename B, typename C>
-inline function<function<C(B)>(A)> curry(function<C(A, B)> fn)
+template <typename R, typename A, typename B>
+inline function<function<R(B)>(A)> curry(function<R(A, B)> fn)
 {
 	return [=](A a) { return [=](B b) { return fn(a, b); }; };
 }
 
-template <typename A, typename B, typename C, typename D>
-inline function<function<function<D(C)>(B)>(A)> curry(function<D(A, B, C)> fn)
+template <typename R, typename A, typename B, typename C>
+inline function<function<function<R(C)>(B)>(A)> curry(function<R(A, B, C)> fn)
 {
 	return [=](A a) { return [=](B b) { return [=](C c) {
 		return fn(a, b, c);
 	}; }; };
 }
 
-template <typename A, typename B, typename C, typename D, typename E>
-inline function<function<function<function<E(D)>(C)>(B)>(A)> curry(
-	function<E(A, B, C, D)> fn
+template <typename R, typename A, typename B, typename C, typename D>
+inline function<function<function<function<R(D)>(C)>(B)>(A)> curry(
+	function<R(A, B, C, D)> fn
 )
 {
 	return [=](A a) { return [=](B b) { return [=](C c) { return [=](C d) {
 		return fn(a, b, c, d);
+	}; }; }; };
+}
+
+template <typename R, typename A, typename B, typename C, typename D, typename E>
+inline function<function<function<function<function<R(E)>(D)>(C)>(B)>(A)> curry(
+	function<R(A, B, C, D, E)> fn
+)
+{
+	return [=](A a) { return [=](B b) { return [=](C c) { return [=](C d) {
+		return [=](E e) { return fn(a, b, c, d, e); };
+	}; }; }; };
+}
+
+template <
+	typename R,
+	typename A,
+	typename B,
+	typename C,
+	typename D,
+	typename E,
+	typename F
+>
+inline function<function<function<function<function<function<
+	R(F)>(E)>(D)>(C)>(B)>(A)
+> curry(
+	function<R(A, B, C, D, E, F)> fn
+)
+{
+	return [=](A a) { return [=](B b) { return [=](C c) { return [=](C d) {
+		return [=](E e) { return [=](F f) { return fn(a, b, c, d, e, f); }; };
 	}; }; }; };
 }
 
@@ -91,19 +121,19 @@ inline function<function<function<function<E(D)>(C)>(B)>(A)> curry(
 
 // compose {{{1
 
-template <typename A, typename B, typename C>
+template <typename R, typename A, typename B>
 // (<<<) :: Category cat => cat b c -> cat a b -> cat a c
 // Data.Function (.) :: (b -> c) -> (a -> b) -> a -> c
-inline function<C(A)> compose(function<C(B)> f, function<B(A)> g)
+inline function<R(A)> compose(function<R(B)> f, function<B(A)> g)
 {
-	return [f,g](A a) -> C { return f(g(a)); };
+	return [f,g](A a) -> R { return f(g(a)); };
 }
 
-template <typename A, typename B, typename C>
+template <typename R, typename A, typename B>
 // Operator equivalent for “compose” function
-inline function<C(A)> operator<(function<C(B)> f, function<B(A)> g)
+inline function<R(A)> operator<(function<R(B)> f, function<B(A)> g)
 {
-	return compose<A, B, C>(f, g);
+	return compose<R, A, B>(f, g);
 }
 
 // }}}1

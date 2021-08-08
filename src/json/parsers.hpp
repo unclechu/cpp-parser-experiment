@@ -15,6 +15,8 @@ Parser<JsonObject> json_object();
 Parser<JsonValue> json_value();
 
 // Parsing
-variant<ParsingError, JsonValue> parse_json(Input input);
+variant<ParsingError<ParserInputType<Parser>>, JsonValue> parse_json(
+	ParserInputType<Parser> input
+);
 
 #endif

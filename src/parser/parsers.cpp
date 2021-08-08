@@ -1,6 +1,7 @@
 #include <functional>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 #include "abstractions/alternative.hpp"
 #include "abstractions/applicative.hpp"
@@ -8,6 +9,9 @@
 #include "parser/parsers.hpp"
 
 using namespace std;
+
+// Local shorthand
+using I = ParserInputType<Parser>;
 
 
 // A helper
@@ -20,22 +24,22 @@ string char_as_str(char c)
 // endOfInput :: forall t . Chunk t => Parser t ()
 Parser<Unit> end_of_input()
 {
-	return Parser<Unit>{[](Input input) -> ParsingResult<Unit> {
+	return Parser<Unit>{[](I input) -> ParsingResult<Unit, I> {
 		if (input.empty())
-			return make_tuple(Unit{}, input);
+			return make_parsing_success<Unit, I>(unit(), input);
 		else
-			return ParsingError{"end_of_input: input is not empty"};
+			return make_parsing_error<I>("end_of_input: input is not empty", input);
 	}};
 }
 
 // anyChar :: Parser Char
 Parser<char> any_char()
 {
-	return Parser<char>{[](Input input) -> ParsingResult<char> {
+	return Parser<char>{[](I input) -> ParsingResult<char, I> {
 		if (input.empty())
-			return ParsingError{"any_char: input is empty"};
+			return make_parsing_error<I>("any_char: input is empty", input);
 		else
-			return make_tuple(input[0], input.substr(1));
+			return make_parsing_success<char, I>(input[0], input.substr(1));
 	}};
 }
 
@@ -44,16 +48,17 @@ Parser<char> char_(char c)
 {
 	return prefix_parsing_failure(
 		"char_('" + char_as_str(c) + "')",
-		Parser<char>{[=](Input input) -> ParsingResult<char> {
+		Parser<char>{[=](I input) -> ParsingResult<char, I> {
 			if (input.empty())
-				return ParsingError{"input is empty"};
+				return make_parsing_error<I>("input is empty", input);
 			else if (input[0] != c)
-				return ParsingError{
+				return make_parsing_error<I>(
 					"char is different, got this: '" +
-					char_as_str(input[0]) + "'"
-				};
+					char_as_str(input[0]) + "'",
+					input
+				);
 			else
-				return make_tuple(input[0], input.substr(1));
+				return make_parsing_success<char, I>(input[0], input.substr(1));
 		}}
 	);
 }
@@ -68,16 +73,17 @@ Parser<char> not_char(char c)
 // satisfy :: (Char -> Bool) -> Parser Char
 Parser<char> satisfy(function<bool(char)> predicate)
 {
-	return Parser<char>{[predicate](Input input) -> ParsingResult<char> {
+	return Parser<char>{[predicate](I input) -> ParsingResult<char, I> {
 		if (input.empty())
-			return ParsingError{"satisfy: input is empty"};
+			return make_parsing_error<I>("satisfy: input is empty", input);
 		else if (predicate(input[0]))
-			return make_tuple(input[0], input.substr(1));
+			return make_parsing_success<char, I>(input[0], input.substr(1));
 		else
-			return ParsingError{
+			return make_parsing_error<I>(
 				"satisfy: '" + char_as_str(input[0]) +
-				"' does not satisfy predicate"
-			};
+				"' does not satisfy predicate",
+				input
+			);
 	}};
 }
 
@@ -92,21 +98,26 @@ Parser<string> string_(string s)
 {
 	return prefix_parsing_failure(
 		"string_(\"" + s + "\")",
-		Parser<string>{[=](Input input) -> ParsingResult<string> {
+		Parser<string>{[=](I input) -> ParsingResult<string, I> {
 			string taken_string;
 
 			if (input.empty())
-				return ParsingError{"Input is empty"};
+				return make_parsing_error<I>("Input is empty", input);
 			else if (input.size() < s.size())
-				return ParsingError{
-					"Input is less than string (input is: \"" + input + "\")"
-				};
+				return make_parsing_error<I>(
+					"Input is less than string (input is: \"" + input + "\")",
+					input
+				);
 			else if ((taken_string = input.substr(0, s.size())) != s)
-				return ParsingError{
-					"String is different, got this: \"" + taken_string + "\""
-				};
+				return make_parsing_error<I>(
+					"String is different, got this: \"" + taken_string + "\"",
+					input
+				);
 			else
-				return make_tuple(taken_string, input.substr(s.size()));
+				return make_parsing_success<string, I>(
+					taken_string,
+					input.substr(s.size())
+				);
 		}}
 	);
 }
@@ -124,18 +135,22 @@ inline Parser<T> generic_decimal_parser(string parser_name)
 {
 	return prefix_parsing_failure(
 		parser_name,
-		Parser<T>{[](Input input) -> ParsingResult<T> {
+		Parser<T>{[](I input) -> ParsingResult<T, I> {
 			return visit(overloaded {
-				[](ParsingError err) -> ParsingResult <T> { return err; },
-				[](ParsingSuccess<string> x) -> ParsingResult <T> {
+				[](ParsingError<I> err) -> ParsingResult<T, I> { return err; },
+				[input](ParsingSuccess<string, I> x) -> ParsingResult<T, I> {
 					auto [ digits_str, tail ] = x;
 					try {
-						return make_tuple(stoi(digits_str), tail);
+						return make_parsing_success<T, I>(
+							stoi(digits_str),
+							tail
+						);
 					} catch (out_of_range&) {
-						return ParsingError{
+						return make_parsing_error<I>(
 							"Integer value is out of integer bounds: " +
-							digits_str
-						};
+							digits_str,
+							input
+						);
 					}
 				}
 			}, digits()(input));
@@ -166,18 +181,22 @@ inline Parser<T> generic_fractional_parser(string parser_name)
 
 	return prefix_parsing_failure(
 		parser_name,
-		Parser<T>{[fractional_number](Input input) -> ParsingResult<T> {
+		Parser<T>{[fractional_number](I input) -> ParsingResult<T, I> {
 			return visit(overloaded {
-				[](ParsingError err) -> ParsingResult<T> { return err; },
-				[](ParsingSuccess<string> x) -> ParsingResult<T> {
+				[](ParsingError<I> err) -> ParsingResult<T, I> { return err; },
+				[input](ParsingSuccess<string, I> x) -> ParsingResult<T, I> {
 					auto [ number_str, tail ] = x;
 					try {
-						return make_tuple(stod(number_str), tail);
+						return make_parsing_success<T, I>(
+							stod(number_str),
+							tail
+						);
 					} catch (out_of_range&) {
-						return ParsingError{
+						return make_parsing_error<I>(
 							"Fractional value is out of type bounds: " +
-							number_str
-						};
+							number_str,
+							input
+						);
 					}
 				}
 			}, fractional_number(input));

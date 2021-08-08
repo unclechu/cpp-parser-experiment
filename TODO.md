@@ -1,5 +1,11 @@
 ## To Do
 
+- Replace module header wrapper with “#pragma once”
+- Add template with mapping “type -> type name as std::string”
+    > Use it for overriding failure messages
+- Implement “Bind” type class abstraction
+    > To make monadic composition. This should simplify code in some places.
+- Add a note that JSON number parser is also incomplete
 - Add good description of this solution to README
     * [ ] Motivation
     * [ ] Explanation for mimicking Haskell type classes
@@ -9,8 +15,9 @@
     * [ ] Demonstrate “curry” helper
 - Implement parsing some structure from “JsonValue”
     > Like “Data.Aeson.FromJSON” in Haskell but without deriving abilities.
-    * [ ] Template “fromJSON”
-    * [ ] Implement some data model for the data from example JSON file
+    * [x] Template “fromJSON”
+    * [x] Implement some data model for the data from example JSON file
+    * [ ] Add “toJSON” serialization back to “JsonValue”
 
 ## Done
 

@@ -70,7 +70,7 @@ Parser<string> spacer()
 // Lazy evaluation (avoid infinite recursion)
 inline Parser<JsonValue> lazy_json_value()
 {
-	return Parser<JsonValue>{[](Input input) { return json_value()(input); }};
+	return Parser<JsonValue>{[](auto input) { return json_value()(input); }};
 }
 
 Parser<JsonArray> json_array()
@@ -92,7 +92,7 @@ Parser<JsonObject> json_object()
 	using Entry = tuple<string, JsonValue>;
 
 	Parser<Entry> entry =
-		function(curry<string, JsonValue, Entry>(make_tuple<string, JsonValue>))
+		function(curry<Entry, string, JsonValue>(make_tuple<string, JsonValue>))
 		^ (function(from_json_string) ^ json_string()) << spacer() << char_(':')
 		^ spacer() >> lazy_json_value();
 
@@ -122,7 +122,9 @@ Parser<JsonValue> json_value()
 	);
 }
 
-variant<ParsingError, JsonValue> parse_json(Input input)
+variant<ParsingError<ParserInputType<Parser>>, JsonValue> parse_json(
+	ParserInputType<Parser> input
+)
 {
 	return parse<JsonValue>(json_value() << end_of_input(), input);
 }

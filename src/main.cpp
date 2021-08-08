@@ -14,6 +14,8 @@
 #include "test.hpp"
 
 #include "json/data-modeling/example-type.hpp"
+#include "json/data-modeling/parsers.hpp"
+#include "json/data-modeling/serialization.hpp"
 
 using namespace std;
 
@@ -176,8 +178,7 @@ int main(int argc, char* argv[])
 
 		if (modeled_data) {
 			ExampleType x = parse_example_type_and_resolve_result(json);
-			cerr << "TODO: implement to_json serialize" << endl;
-			cerr << "TODO: print serialized JsonValue" << endl;
+			cout << serialize_json_to_string(pretty_print, to_json(x)) << endl;
 		} else {
 			cout << serialize_json_to_string(pretty_print, json) << endl;
 		}

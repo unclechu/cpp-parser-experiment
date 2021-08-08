@@ -1,12 +1,16 @@
+#include <map>
 #include <utility>
 #include <variant>
+#include <vector>
 
 using namespace std;
 
 
 #include "json/data-modeling/helpers.hpp"
 #include "json/data-modeling/parsers.hpp"
+#include "json/data-modeling/serialization.hpp"
 #include "json/data-modeling/types.hpp"
+#include "json/types.hpp"
 
 #include "json/data-modeling/example-type.hpp"
 
@@ -62,6 +66,49 @@ FromJsonParser<ExampleType> from_json()
 				from_json<ExampleTypePhoneNumber>()
 			))
 	);
+}
+
+// }}}1
+
+// ToJSON instances-ish {{{1
+
+template <>
+JsonValue to_json(ExampleTypeAddress x)
+{
+	map<string, JsonValue> obj = {
+		{"streetAddress", to_json(x.street_address)},
+		{"city", to_json(x.city)},
+		{"state", to_json(x.state)},
+		{"postalCode", to_json(x.postal_code)},
+	};
+	return to_json(obj);
+}
+
+template <>
+JsonValue to_json(ExampleTypePhoneNumber x)
+{
+	map<string, JsonValue> obj = {
+		{"type", to_json(x.type)},
+		{"number", to_json(x.number)},
+	};
+	return to_json(obj);
+}
+
+template <>
+JsonValue to_json(ExampleType x)
+{
+	map<string, JsonValue> obj = {
+		{"firstName", to_json(x.first_name)},
+		{"lastName", to_json(x.last_name)},
+		{"isAlive", to_json(x.is_alive)},
+		{"age", to_json(x.age)},
+		{"address", to_json(x.address)},
+		{
+			"phoneNumbers",
+			to_json<vector, ExampleTypePhoneNumber>(x.phone_numbers)
+		},
+	};
+	return to_json(obj);
 }
 
 // }}}1

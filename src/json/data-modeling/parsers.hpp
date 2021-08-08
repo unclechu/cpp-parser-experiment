@@ -45,15 +45,15 @@ FromJsonParser<F<A>> from_json(FromJsonParser<A> item_parser)
 				T mapped_list;
 
 				for (size_t i = 0; i < x.first.size(); ++i) {
-					optional<ParsingError<I>> err = nullopt;
+					optional<ParsingError<I>> failure = nullopt;
 
 					list<string> json_path = x.second.second;
 					json_path.push_back("[" + to_string(i) + "]");
 					I item_input = make_pair(x.first[i], json_path);
 
 					visit(overloaded {
-						[](ParsingError<I> err) {
-							err = make_parsing_error<I>(
+						[&failure](ParsingError<I> err) {
+							failure = make_parsing_error<I>(
 								// TODO print type that was targered to be parsed
 								"Failed to parse JsonArray item: " + err.first,
 								err.second
@@ -64,8 +64,8 @@ FromJsonParser<F<A>> from_json(FromJsonParser<A> item_parser)
 						}
 					}, item_parser(item_input));
 
-					if (err != nullopt)
-						return err.value();
+					if (failure != nullopt)
+						return failure.value();
 				}
 
 				return make_parsing_success<T, I>(mapped_list, input);

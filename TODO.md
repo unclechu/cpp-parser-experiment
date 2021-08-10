@@ -13,11 +13,6 @@
     * [ ] Some parsers examples
     * [ ] Demonstration of parsers composition  in Haskell and showing equivalents-ish in C++
     * [ ] Demonstrate “curry” helper
-- Implement parsing some structure from “JsonValue”
-    > Like “Data.Aeson.FromJSON” in Haskell but without deriving abilities.
-    * [x] Template “fromJSON”
-    * [x] Implement some data model for the data from example JSON file
-    * [ ] Add “toJSON” serialization back to “JsonValue”
 
 ## Done
 
@@ -51,3 +46,8 @@
     * [x] Pretty printing
 - Nix: Add build option for using clang instead of gcc
     * [x] Fix building errors when using clang
+- Implement parsing some structure from “JsonValue”
+    > Like “Data.Aeson.FromJSON” in Haskell but without deriving abilities.
+    * [x] Template “fromJSON”
+    * [x] Implement some data model for the data from example JSON file
+    * [x] Add “toJSON” serialization back to “JsonValue”

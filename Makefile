@@ -29,6 +29,8 @@ test: build
 	'$(BUILD_DIR)/$(TARGET)' test
 	'$(BUILD_DIR)/$(TARGET)' < example.json | bash test-json.sh
 	'$(BUILD_DIR)/$(TARGET)' --pretty < example.json | bash test-json.sh
+	'$(BUILD_DIR)/$(TARGET)' --model < example.json | bash test-json.sh --model
+	'$(BUILD_DIR)/$(TARGET)' --model --pretty < example.json | bash test-json.sh --model
 
 install: build
 	cp -- '$(BUILD_DIR)/$(TARGET)' '$(PREFIX)/bin/$(TARGET)'

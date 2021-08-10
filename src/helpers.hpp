@@ -81,7 +81,7 @@ inline function<function<function<function<R(D)>(C)>(B)>(A)> curry(
 	function<R(A, B, C, D)> fn
 )
 {
-	return [=](A a) { return [=](B b) { return [=](C c) { return [=](C d) {
+	return [=](A a) { return [=](B b) { return [=](C c) { return [=](D d) {
 		return fn(a, b, c, d);
 	}; }; }; };
 }
@@ -91,7 +91,7 @@ inline function<function<function<function<function<R(E)>(D)>(C)>(B)>(A)> curry(
 	function<R(A, B, C, D, E)> fn
 )
 {
-	return [=](A a) { return [=](B b) { return [=](C c) { return [=](C d) {
+	return [=](A a) { return [=](B b) { return [=](C c) { return [=](D d) {
 		return [=](E e) { return fn(a, b, c, d, e); };
 	}; }; }; };
 }
@@ -111,7 +111,7 @@ inline function<function<function<function<function<function<
 	function<R(A, B, C, D, E, F)> fn
 )
 {
-	return [=](A a) { return [=](B b) { return [=](C c) { return [=](C d) {
+	return [=](A a) { return [=](B b) { return [=](C c) { return [=](D d) {
 		return [=](E e) { return [=](F f) { return fn(a, b, c, d, e, f); }; };
 	}; }; }; };
 }

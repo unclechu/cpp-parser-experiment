@@ -1,5 +1,4 @@
-#ifndef _JSON_TYPES_HPP_
-#define _JSON_TYPES_HPP_
+#pragma once
 
 #include <map>
 #include <string>
@@ -118,5 +117,3 @@ inline map<K, V> make_map_from_vector(vector<tuple<K, V>> list)
 }
 
 // }}}1
-
-#endif

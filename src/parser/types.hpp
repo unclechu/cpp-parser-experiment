@@ -1,5 +1,4 @@
-#ifndef _PARSER_TYPES_HPP_
-#define _PARSER_TYPES_HPP_
+#pragma once
 
 // “Parser” type definition and a couple of tightly related types.
 //
@@ -318,5 +317,3 @@ inline F<vector<A>> optional_list(F<vector<A>> parser)
 }
 
 // }}}1
-
-#endif

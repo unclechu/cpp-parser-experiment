@@ -1,5 +1,4 @@
-#ifndef _PARSER_RESOLVERS_HPP_
-#define _PARSER_RESOLVERS_HPP_
+#pragma once
 
 // Functions that are useful for initiating parsing and resolving the parsing
 // result.
@@ -70,5 +69,3 @@ variant<ParsingError<ParserInputType<F>>, A> parse(
 }
 
 // }}}1
-
-#endif

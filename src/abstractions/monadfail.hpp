@@ -1,5 +1,4 @@
-#ifndef _ABSTRACTIONS_MONADFAIL_HPP_
-#define _ABSTRACTIONS_MONADFAIL_HPP_
+#pragma once
 
 // MonadFail implementation (mimicking MonadFail type class from Haskell)
 //
@@ -21,5 +20,3 @@ F<A> fail(string err)
 {
 	return fail<A>(err);
 }
-
-#endif

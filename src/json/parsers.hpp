@@ -1,5 +1,4 @@
-#ifndef _JSON_PARSERS_HPP_
-#define _JSON_PARSERS_HPP_
+#pragma once
 
 #include "json/types.hpp"
 #include "parser/types.hpp"
@@ -18,5 +17,3 @@ Parser<JsonValue> json_value();
 variant<ParsingError<ParserInputType<Parser>>, JsonValue> parse_json(
 	ParserInputType<Parser> input
 );
-
-#endif

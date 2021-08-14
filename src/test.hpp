@@ -1,6 +1,3 @@
-#ifndef _TEST_HPP_
-#define _TEST_HPP_
+#pragma once
 
 int run_test_cases();
-
-#endif

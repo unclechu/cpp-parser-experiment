@@ -1,5 +1,4 @@
-#ifndef _ABSTRACTIONS_APPLICATIVE_HPP_
-#define _ABSTRACTIONS_APPLICATIVE_HPP_
+#pragma once
 
 // Applicative implementation (mimicking Applicative type class from Haskell)
 //
@@ -100,5 +99,3 @@ F<B> operator>>(F<A> functor_a, F<B> functor_b)
 // }}}2
 
 // }}}1
-
-#endif

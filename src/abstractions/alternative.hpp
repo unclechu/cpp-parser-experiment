@@ -1,5 +1,4 @@
-#ifndef _ABSTRACTIONS_ALTERNATIVE_HPP_
-#define _ABSTRACTIONS_ALTERNATIVE_HPP_
+#pragma once
 
 // Alternative implementation (mimicking Alternative type class from Haskell)
 //
@@ -101,5 +100,3 @@ F<optional<A>> optional_parser(F<A> functor)
 }
 
 // }}}1
-
-#endif

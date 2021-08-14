@@ -1,5 +1,4 @@
-#ifndef _JSON_DATA_MODELING_PARSERS_HPP_
-#define _JSON_DATA_MODELING_PARSERS_HPP_
+#pragma once
 
 #include <functional>
 #include <iomanip>
@@ -117,5 +116,3 @@ FromJsonParser<T> in_key(string k, FromJsonParser<T> parser)
 		}}
 	);
 }
-
-#endif

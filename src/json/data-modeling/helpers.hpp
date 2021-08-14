@@ -1,5 +1,4 @@
-#ifndef _JSON_DATA_MODELING_HELPERS_HPP_
-#define _JSON_DATA_MODELING_HELPERS_HPP_
+#pragma once
 
 #include <functional>
 
@@ -106,5 +105,3 @@ inline function<function<function<function<function<function<
 }
 
 // }}}1
-
-#endif

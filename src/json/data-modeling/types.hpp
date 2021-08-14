@@ -1,5 +1,4 @@
-#ifndef _JSON_DATA_MODELING_TYPES_HPP_
-#define _JSON_DATA_MODELING_TYPES_HPP_
+#pragma once
 
 #include <functional>
 #include <list>
@@ -109,5 +108,3 @@ inline FromJsonParser<vector<A>> optional_list(FromJsonParser<vector<A>> parser)
 }
 
 // }}}1
-
-#endif

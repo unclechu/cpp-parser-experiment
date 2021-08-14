@@ -1,5 +1,4 @@
-#ifndef _HELPERS_HPP_
-#define _HELPERS_HPP_
+#pragma once
 
 #include <functional>
 #include <optional>
@@ -137,5 +136,3 @@ inline function<R(A)> operator<(function<R(B)> f, function<B(A)> g)
 }
 
 // }}}1
-
-#endif

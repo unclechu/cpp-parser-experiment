@@ -1,5 +1,4 @@
-#ifndef _JSON_DATA_MODELING_SERIALIZATION_HPP_
-#define _JSON_DATA_MODELING_SERIALIZATION_HPP_
+#pragma once
 
 #include <functional>
 #include <type_traits>
@@ -29,5 +28,3 @@ JsonValue to_json(F<A> list)
 		return to_json(arr);
 	}
 }
-
-#endif

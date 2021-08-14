@@ -1,5 +1,4 @@
-#ifndef _ABSTRACTIONS_FUNCTOR_HPP_
-#define _ABSTRACTIONS_FUNCTOR_HPP_
+#pragma once
 
 // Functor implementation (mimicking Functor type class from Haskell)
 //
@@ -80,5 +79,3 @@ F<B> operator>=(F<A> functor, B to_value)
 // }}}2
 
 // }}}1
-
-#endif

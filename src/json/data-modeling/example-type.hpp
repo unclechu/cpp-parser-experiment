@@ -1,5 +1,4 @@
-#ifndef _JSON_DATA_MODELING_EXAMPLE_TYPE_HPP_
-#define _JSON_DATA_MODELING_EXAMPLE_TYPE_HPP_
+#pragma once
 
 #include <string>
 #include <vector>
@@ -39,5 +38,3 @@ struct ExampleType {
 	ExampleTypeAddress address;
 	vector<ExampleTypePhoneNumber> phone_numbers;
 };
-
-#endif

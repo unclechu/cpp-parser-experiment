@@ -1,5 +1,4 @@
-#ifndef _PARSER_PARSERS_HPP_
-#define _PARSER_PARSERS_HPP_
+#pragma once
 
 // Building blocks for writing more complex parsers
 
@@ -42,5 +41,3 @@ Parser<unsigned int> unsigned_decimal();
 Parser<int> signed_decimal();
 Parser<double> unsigned_fractional();
 Parser<double> signed_fractional();
-
-#endif

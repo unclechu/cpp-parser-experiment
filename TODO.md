@@ -1,6 +1,5 @@
 ## To Do
 
-- Replace module header wrapper with “#pragma once”
 - Add template with mapping “type -> type name as std::string”
     > Use it for overriding failure messages
 - Implement “Bind” type class abstraction
@@ -51,3 +50,4 @@
     * [x] Template “fromJSON”
     * [x] Implement some data model for the data from example JSON file
     * [x] Add “toJSON” serialization back to “JsonValue”
+- Replace module header wrapper with “#pragma once”
